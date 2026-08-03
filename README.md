@@ -2,6 +2,8 @@
 
 > 🇷🇺 [Читать на русском](README.ru.md)
 
+![Demo waveform — before vs after](assets/demo_waveform.png)
+
 An MCP server for auto-mixing and auto-mastering in Ableton Live **tuned to a musical style/genre**.
 An AI agent (opencode, Claude Code, Claude Desktop...) analyzes render files of your tracks, compares them against a
 style profile and produces/applies corrections: levels, pan, EQ hints, compression — and additionally renders a

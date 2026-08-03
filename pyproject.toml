@@ -1,7 +1,7 @@
-﻿[project]
+[project]
 name = "ableton-auto-mix-mcp"
 version = "0.1.0"
-description = "MusicMixCode вЂ” MCP server for AI-driven auto-mixing and mastering in Ableton Live: style-based mixing, preview renders, release checks"
+description = "MusicMixCode — MCP server for AI-driven auto-mixing and mastering in Ableton Live: style-based mixing, preview renders, release checks"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
