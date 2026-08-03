@@ -9,9 +9,11 @@ from __future__ import annotations
 import logging
 import os
 from pathlib import Path
-from typing import Any
+from typing import Annotated, Any
 
 import numpy as np
+from pydantic import Field
+from mcp_types import ToolAnnotations
 
 from mcp.server.mcpserver import MCPServer
 
@@ -32,9 +34,13 @@ DEFAULT_RENDER_DIR = os.environ.get(
 # ---------------------------------------------------------------------------
 # Discovery / info tools
 # ---------------------------------------------------------------------------
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
 def list_styles() -> list[dict[str, Any]]:
-    """List all available mixing styles with their targets."""
+    """List all available mixing styles with their targets.
+
+    Read-only. Call this first to discover style names; pass one to get_style,
+    auto_mix or preview_mix.
+    """
     return [
         {
             "name": p.name,
@@ -48,14 +54,20 @@ def list_styles() -> list[dict[str, Any]]:
     ]
 
 
-@mcp.tool()
-def get_style(style: str) -> dict[str, Any]:
+@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
+def get_style(
+    style: Annotated[str, Field(description="Style name, e.g. 'techno', 'breaks', 'hip_hop'. See list_styles.")],
+) -> dict[str, Any]:
     """Get the full profile for a style, including spectral curve, track
-    balance, compression and FX recommendations."""
+    balance, compression and FX recommendations.
+
+    Read-only. Call list_styles first to see the available names, then pass
+    one here to fetch its detailed profile.
+    """
     return profiles.get_profile(style).to_dict()
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
 def get_ableton_status() -> dict[str, Any]:
     """Check connection to Ableton Live and return basic project info."""
     try:
@@ -78,10 +90,16 @@ def get_ableton_status() -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 # Analysis tools
 # ---------------------------------------------------------------------------
-@mcp.tool()
-def analyze_audio(path: str) -> dict[str, Any]:
+@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
+def analyze_audio(
+    path: Annotated[str, Field(description="Path to a rendered WAV file (absolute or relative to the working directory).")],
+) -> dict[str, Any]:
     """Analyze a rendered WAV file into mix metrics: loudness (LUFS/LRA),
-    RMS, peak, spectral band energy and stereo width."""
+    RMS, peak, spectral band energy and stereo width.
+
+    Read-only. Use on a single bounced render. For a whole folder of renders,
+    use analyze_render_dir instead.
+    """
     result = analyzer.analyze_track(path)
     return {
         "name": result.name,
@@ -97,10 +115,22 @@ def analyze_audio(path: str) -> dict[str, Any]:
     }
 
 
-@mcp.tool()
-def analyze_render_dir(directory: str = DEFAULT_RENDER_DIR) -> list[dict[str, Any]]:
+@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
+def analyze_render_dir(
+    directory: Annotated[
+        str,
+        Field(
+            description="Folder containing one WAV per track (bounced from Ableton). "
+            "Defaults to the renders/ directory."
+        ),
+    ] = DEFAULT_RENDER_DIR,
+) -> list[dict[str, Any]]:
     """Analyze every WAV in a directory of rendered tracks. Point this at the
-    folder where you bounced the Ableton tracks (one WAV per track)."""
+    folder where you bounced the Ableton tracks (one WAV per track).
+
+    Read-only, batch variant of analyze_audio. Run this before auto_mix or
+    preview_mix so the renders are measured against the style profile.
+    """
     results = analyzer.analyze_directory(directory)
     return [
         {
@@ -120,12 +150,34 @@ def analyze_render_dir(directory: str = DEFAULT_RENDER_DIR) -> list[dict[str, An
 # ---------------------------------------------------------------------------
 # Auto-mix tools
 # ---------------------------------------------------------------------------
-@mcp.tool()
+@mcp.tool(
+    annotations=ToolAnnotations(
+        destructiveHint=True,
+        idempotentHint=False,
+        readOnlyHint=False,
+    )
+)
 def auto_mix(
-    style: str,
-    render_dir: str = DEFAULT_RENDER_DIR,
-    dry_run: bool = True,
-    pattern: str = "*.wav",
+    style: Annotated[str, Field(description="Style name, e.g. 'techno', 'breaks', 'hip_hop'. See list_styles.")],
+    render_dir: Annotated[
+        str,
+        Field(
+            description="Folder containing one WAV per track (bounced from Ableton). "
+            "Defaults to the renders/ directory."
+        ),
+    ] = DEFAULT_RENDER_DIR,
+    dry_run: Annotated[
+        bool,
+        Field(
+            description="True = return recommendations without touching Ableton (safe). "
+            "False = APPLY the volume/pan corrections to the Live set (mutating!). "
+            "Always try True first."
+        ),
+    ] = True,
+    pattern: Annotated[
+        str,
+        Field(description="Glob pattern matching the WAV files inside render_dir. Default '*.wav'."),
+    ] = "*.wav",
 ) -> dict[str, Any]:
     """Auto-mix rendered tracks toward a musical style.
 
@@ -138,6 +190,10 @@ def auto_mix(
 
     Returns:
         Per-track corrections (levels, pan, EQ band deltas) and master notes.
+
+    Call with dry_run=True first to review the recommendations; only use
+    dry_run=False to apply them to the Live set. Requires Ableton Live +
+    AbletonOSC for dry_run=False; the dry run works offline.
     """
     profile = profiles.get_profile(style)
     results = analyzer.analyze_directory(render_dir, pattern)
@@ -168,15 +224,55 @@ def auto_mix(
     return mix.to_dict()
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations=ToolAnnotations(
+        destructiveHint=False,
+        readOnlyHint=False,
+        idempotentHint=True,
+    )
+)
 def preview_mix(
-    style: str,
-    render_dir: str = DEFAULT_RENDER_DIR,
-    pattern: str = "*.wav",
-    output_path: str | None = None,
-    max_duration: float | None = None,
-    manual_gain: dict[str, float] | None = None,
-    sidechain_db: float | None = None,
+    style: Annotated[str, Field(description="Style name, e.g. 'techno', 'breaks'. See list_styles.")],
+    render_dir: Annotated[
+        str,
+        Field(
+            description="Folder containing one WAV per track (bounced from Ableton). "
+            "Defaults to the renders/ directory."
+        ),
+    ] = DEFAULT_RENDER_DIR,
+    pattern: Annotated[
+        str,
+        Field(description="Glob pattern matching the WAV files inside render_dir. Default '*.wav'."),
+    ] = "*.wav",
+    output_path: Annotated[
+        str | None,
+        Field(
+            description="Where to write the preview WAV. Defaults to <render_dir>/preview_<style>.wav. "
+            "Writes a NEW file; the source renders are never modified."
+        ),
+    ] = None,
+    max_duration: Annotated[
+        float | None,
+        Field(
+            description="Cap the preview length in seconds. When renders have mismatched lengths "
+            "(loops vs full arrangement), pass the loop length so the preview stays a tight section. "
+            "If None, all tracks are trimmed to the shortest render."
+        ),
+    ] = None,
+    manual_gain: Annotated[
+        dict[str, float] | None,
+        Field(
+            description="Extra per-file volume in dB, keyed by the render file name without extension, "
+            "e.g. {'snt2': -4.0}."
+        ),
+    ] = None,
+    sidechain_db: Annotated[
+        float | None,
+        Field(
+            description="Duck all non-snare tracks by this many dB when a snare hits, e.g. -4.0 for a "
+            "light pump. None disables it."
+        ),
+    ] = None,
 ) -> dict[str, Any]:
     """Apply the style corrections to the rendered WAVs and bounce a stereo
     preview mix you can listen to WITHOUT Ableton: volumes + pans are applied
@@ -197,6 +293,10 @@ def preview_mix(
                      without extension, e.g. {"snt2": -4.0}.
         sidechain_db: duck all non-snare tracks by this many dB when a snare
                      hits, e.g. -4.0 for a light pump. None disables it.
+
+    Works fully offline (no Ableton needed) as long as the render WAVs exist.
+    Use this to listen to the mix before applying anything in Live; for
+    recommendations only, use auto_mix with dry_run=True.
     """
     profile = profiles.get_profile(style)
     return preview.render_preview_mix(
@@ -206,20 +306,52 @@ def preview_mix(
     )
 
 
-@mcp.tool()
-def suggest_style(render_dir: str = DEFAULT_RENDER_DIR, pattern: str = "*.wav") -> dict[str, Any]:
-    """Analyze the rendered tracks and suggest which style profile fits best."""
+@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
+def suggest_style(
+    render_dir: Annotated[
+        str,
+        Field(
+            description="Folder containing one WAV per track (bounced from Ableton). "
+            "Defaults to the renders/ directory."
+        ),
+    ] = DEFAULT_RENDER_DIR,
+    pattern: Annotated[
+        str,
+        Field(description="Glob pattern matching the WAV files inside render_dir. Default '*.wav'."),
+    ] = "*.wav",
+) -> dict[str, Any]:
+    """Analyze the rendered tracks and suggest which style profile fits best.
+
+    Read-only. Use this before auto_mix when you are unsure which style to
+    pick; the returned profile name can then be passed to auto_mix or
+    preview_mix.
+    """
     results = analyzer.analyze_directory(render_dir, pattern)
     if not results:
         raise ValueError(f"No {pattern} files found in {render_dir}")
     return mixer.suggest_style(results)
 
 
-@mcp.tool()
-def analyze_conflicts(render_dir: str = DEFAULT_RENDER_DIR, pattern: str = "*.wav") -> dict[str, Any]:
+@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
+def analyze_conflicts(
+    render_dir: Annotated[
+        str,
+        Field(
+            description="Folder containing one WAV per track (bounced from Ableton). "
+            "Defaults to the renders/ directory."
+        ),
+    ] = DEFAULT_RENDER_DIR,
+    pattern: Annotated[
+        str,
+        Field(description="Glob pattern matching the WAV files inside render_dir. Default '*.wav'."),
+    ] = "*.wav",
+) -> dict[str, Any]:
     """Analyze the rendered tracks and report which pairs are fighting for the
     same frequency band (e.g. bass vs sub, snare vs bass). Each conflict comes
-    with an actionable suggestion (high-pass, EQ cut, ducking)."""
+    with an actionable suggestion (high-pass, EQ cut, ducking).
+
+    Read-only diagnostic. Run before auto_mix to plan EQ/ducking decisions.
+    """
     results = analyzer.analyze_directory(render_dir, pattern)
     if not results:
         raise ValueError(f"No {pattern} files found in {render_dir}")
@@ -231,12 +363,39 @@ def analyze_conflicts(render_dir: str = DEFAULT_RENDER_DIR, pattern: str = "*.wa
     }
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations=ToolAnnotations(
+        destructiveHint=False,
+        readOnlyHint=False,
+        idempotentHint=True,
+    )
+)
 def release_check(
-    render_dir: str = DEFAULT_RENDER_DIR,
-    style: str | None = None,
-    pattern: str = "*.wav",
-    output_path: str | None = None,
+    render_dir: Annotated[
+        str,
+        Field(
+            description="Directory containing one WAV per track (bounced from Ableton). "
+            "Defaults to the renders/ directory."
+        ),
+    ] = DEFAULT_RENDER_DIR,
+    style: Annotated[
+        str | None,
+        Field(
+            description="Style name (see list_styles) whose targets to measure against. "
+            "Not needed if output_path points at an existing WAV. See list_styles."
+        ),
+    ] = None,
+    pattern: Annotated[
+        str,
+        Field(description="Glob pattern matching the WAV files inside render_dir. Default '*.wav'."),
+    ] = "*.wav",
+    output_path: Annotated[
+        str | None,
+        Field(
+            description="Existing WAV to check. When given, style is optional and only this file "
+            "is measured. When omitted, a preview is rendered for style and then measured."
+        ),
+    ] = None,
 ) -> dict[str, Any]:
     """Run the mix through a label-style quality gate.
 
@@ -244,6 +403,10 @@ def release_check(
     style (or reuses the existing preview file) and measures it against
     top-label targets: LUFS, LRA, true peak, RMS and spectral tilt. Returns a
     ready/needs_work verdict with per-metric results.
+
+    Read-only for your audio files; it may write a preview WAV when
+    output_path is omitted. Run this last, after preview_mix, to decide
+    whether the mix is release-ready.
     """
     import os
 
