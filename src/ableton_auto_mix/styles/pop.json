@@ -1,0 +1,39 @@
+{
+  "name": "pop",
+  "label": "Pop / Top 40",
+  "target_lufs": -12.0,
+  "target_lra": 5.5,
+  "tempo_range": [95, 130],
+  "stereo_width": "wide",
+  "frequency_balance": [
+    {"band": "sub_bass", "freq_range": [20, 60], "target_db": -4.0, "weight": 0.9},
+    {"band": "bass", "freq_range": [60, 120], "target_db": -4.0, "weight": 0.9},
+    {"band": "low_mids", "freq_range": [120, 250], "target_db": -7.0, "weight": 0.6},
+    {"band": "mids", "freq_range": [250, 2000], "target_db": -7.0, "weight": 0.7},
+    {"band": "high_mids", "freq_range": [2000, 6000], "target_db": -6.0, "weight": 0.9},
+    {"band": "highs", "freq_range": [6000, 20000], "target_db": -10.0, "weight": 0.6}
+  ],
+  "track_balance": {
+    "vocals": {"level": -3.0, "pan": 0.0, "width": "moderate"},
+    "bass": {"level": -6.0, "pan": 0.0, "width": "mono"},
+    "kick": {"level": -5.0, "pan": 0.0, "width": "mono"},
+    "snare": {"level": -7.0, "pan": 0.05, "width": "mono"},
+    "melody": {"level": -9.0, "pan": 0.1, "width": "wide"},
+    "pads": {"level": -12.0, "pan": 0.2, "width": "very_wide"},
+    "percussion": {"level": -11.0, "pan": 0.3, "width": "wide"},
+    "fx": {"level": -14.0, "pan": 0.4, "width": "very_wide"}
+  },
+  "compression": {
+    "bus": {"ratio": 2.5, "attack_ms": 20, "release_ms": 180, "makeup_db": 0.0, "style": "glue"},
+    "vocals": {"ratio": 3.0, "attack_ms": 8, "release_ms": 90, "makeup_db": 1.0},
+    "drums": {"ratio": 4.0, "attack_ms": 10, "release_ms": 120, "makeup_db": 0.0}
+  },
+  "fx_suggestions": [
+    "vocal chain: EQ, de-esser, comp, reverb send, delay send",
+    "multiband compression on master",
+    "wide haas-style chorus on pads and synths",
+    "light saturation on bass",
+    "delay throws on vocal phrases"
+  ],
+  "description": "Стриминговый поп: вокал в центре и впереди, сбалансированный низ, широкая стерео-картина. Умеренная динамика."
+}

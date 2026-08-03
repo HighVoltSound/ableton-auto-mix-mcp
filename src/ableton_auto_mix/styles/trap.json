@@ -1,0 +1,41 @@
+{
+  "name": "trap",
+  "label": "Trap / Phonk",
+  "target_lufs": -8.5,
+  "target_lra": 4.0,
+  "tempo_range": [130, 155],
+  "stereo_width": "wide",
+  "frequency_balance": [
+    {"band": "sub_bass", "freq_range": [20, 60], "target_db": -1.0, "weight": 1.0},
+    {"band": "bass", "freq_range": [60, 120], "target_db": -3.0, "weight": 1.0},
+    {"band": "low_mids", "freq_range": [120, 250], "target_db": -7.0, "weight": 0.7},
+    {"band": "mids", "freq_range": [250, 2000], "target_db": -7.0, "weight": 0.7},
+    {"band": "high_mids", "freq_range": [2000, 6000], "target_db": -6.0, "weight": 0.9},
+    {"band": "highs", "freq_range": [6000, 20000], "target_db": -10.0, "weight": 0.6}
+  ],
+  "track_balance": {
+    "808": {"level": -2.0, "pan": 0.0, "width": "mono"},
+    "kick": {"level": -4.0, "pan": 0.0, "width": "mono"},
+    "snare": {"level": -5.0, "pan": 0.0, "width": "mono"},
+    "hihat": {"level": -10.0, "pan": 0.25, "width": "wide"},
+    "percussion": {"level": -12.0, "pan": 0.35, "width": "wide"},
+    "vocals": {"level": -5.0, "pan": 0.0, "width": "moderate"},
+    "melody": {"level": -9.0, "pan": 0.15, "width": "wide"},
+    "fx": {"level": -13.0, "pan": 0.4, "width": "very_wide"}
+  },
+  "compression": {
+    "bus": {"ratio": 3.0, "attack_ms": 12, "release_ms": 140, "makeup_db": 0.0, "style": "glue"},
+    "808": {"ratio": 6.0, "attack_ms": 18, "release_ms": 110, "makeup_db": 3.0},
+    "snare": {"ratio": 4.0, "attack_ms": 5, "release_ms": 100, "makeup_db": 0.0},
+    "vocals": {"ratio": 4.0, "attack_ms": 8, "release_ms": 80, "makeup_db": 1.0}
+  },
+  "fx_suggestions": [
+    "808 with long decay and slight distortion/saturation for presence",
+    "sidechain 808 and melodies to the kick",
+    "triplet/rolled hi-hats, fast patterns, wide panning",
+    "big trap snare with clap layer and short verb",
+    "vocal chops and pitch-drops into the drop",
+    "mono 808 and kick below 100 Hz, wide for everything above"
+  ],
+  "description": "Трэп: жирные 808 с длинным сустейном, ломаные тройные хэты, агрессивные снэры, тёмная агрессивная эстетика."
+}

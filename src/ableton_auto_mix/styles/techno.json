@@ -1,0 +1,38 @@
+{
+  "name": "techno",
+  "label": "Techno / Club",
+  "target_lufs": -8.0,
+  "target_lra": 3.5,
+  "tempo_range": [120, 150],
+  "stereo_width": "wide",
+  "frequency_balance": [
+    {"band": "sub_bass", "freq_range": [20, 60], "target_db": 0.0, "weight": 1.0},
+    {"band": "bass", "freq_range": [60, 120], "target_db": -2.0, "weight": 1.0},
+    {"band": "low_mids", "freq_range": [120, 250], "target_db": -8.0, "weight": 0.7},
+    {"band": "mids", "freq_range": [250, 2000], "target_db": -10.0, "weight": 0.5},
+    {"band": "high_mids", "freq_range": [2000, 6000], "target_db": -9.0, "weight": 0.6},
+    {"band": "highs", "freq_range": [6000, 20000], "target_db": -12.0, "weight": 0.5}
+  ],
+  "track_balance": {
+    "kick": {"level": -3.0, "pan": 0.0, "width": "mono"},
+    "sub_bass": {"level": -4.0, "pan": 0.0, "width": "mono"},
+    "bass": {"level": -6.0, "pan": 0.0, "width": "mono"},
+    "percussion": {"level": -12.0, "pan": 0.4, "width": "wide"},
+    "hihat": {"level": -14.0, "pan": 0.3, "width": "wide"},
+    "pads": {"level": -13.0, "pan": 0.2, "width": "very_wide"},
+    "synth": {"level": -10.0, "pan": 0.15, "width": "wide"},
+    "fx": {"level": -16.0, "pan": 0.4, "width": "very_wide"}
+  },
+  "compression": {
+    "bus": {"ratio": 4.0, "attack_ms": 10, "release_ms": 120, "makeup_db": 0.0, "style": "glue"},
+    "kick": {"ratio": 6.0, "attack_ms": 5, "release_ms": 80, "makeup_db": 2.0},
+    "bass": {"ratio": 5.0, "attack_ms": 15, "release_ms": 100, "makeup_db": 1.0}
+  },
+  "fx_suggestions": [
+    "sidechain on synths/pads to kick",
+    "high-pass everything below 30 Hz except kick and sub",
+    "glue compressor on master bus",
+    "mild saturation on kick and bass"
+  ],
+  "description": "Плотный клубный микс: доминирующий кик и саб, выдолбленная середина, яркие шапки. Жёсткий сайдчейн, glue-компрессия на мастере."
+}

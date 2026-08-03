@@ -1,0 +1,46 @@
+[project]
+name = "ableton-auto-mix-mcp"
+version = "0.1.0"
+description = "MusicMixCode — MCP server for AI-driven auto-mixing and mastering in Ableton Live: style-based mixing, preview renders, release checks"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+    { name = "MusicMixCode" },
+]
+maintainers = [{ name = "HighV" }]
+keywords = ["mcp", "ableton", "audio", "mixing", "mastering", "ai", "music", "daw", "loudness"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: End Users/Desktop",
+    "Topic :: Multimedia :: Sound/Audio :: Mixers",
+    "Topic :: Multimedia :: Sound/Audio :: Sound Synthesis",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: MIT License",
+]
+dependencies = [
+    "mcp>=1.0.0",
+    "python-osc>=1.8",
+    "librosa>=0.10",
+    "pyloudnorm>=0.1",
+    "numpy>=1.24",
+    "soundfile>=0.12",
+    "pydantic>=2.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/HighV/ableton-auto-mix-mcp"
+Repository = "https://github.com/HighV/ableton-auto-mix-mcp"
+Documentation = "https://github.com/HighV/ableton-auto-mix-mcp#readme"
+
+[project.scripts]
+ableton-auto-mix-mcp = "ableton_auto_mix.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+ableton_auto_mix = ["styles/*.json"]

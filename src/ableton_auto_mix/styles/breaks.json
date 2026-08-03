@@ -1,0 +1,262 @@
+{
+  "name": "breaks",
+  "label": "Breaks / Breakbeat",
+  "target_lufs": -11.0,
+  "target_lra": 5.0,
+  "tempo_range": [
+    128,
+    140
+  ],
+  "stereo_width": "wide",
+  "frequency_balance": [
+    {
+      "band": "sub_bass",
+      "freq_range": [
+        20,
+        60
+      ],
+      "target_db": -2.0,
+      "weight": 0.9
+    },
+    {
+      "band": "bass",
+      "freq_range": [
+        60,
+        120
+      ],
+      "target_db": -4.0,
+      "weight": 0.9
+    },
+    {
+      "band": "low_mids",
+      "freq_range": [
+        120,
+        250
+      ],
+      "target_db": -6.0,
+      "weight": 0.7
+    },
+    {
+      "band": "mids",
+      "freq_range": [
+        250,
+        2000
+      ],
+      "target_db": -7.0,
+      "weight": 0.7
+    },
+    {
+      "band": "high_mids",
+      "freq_range": [
+        2000,
+        6000
+      ],
+      "target_db": -7.0,
+      "weight": 0.8
+    },
+    {
+      "band": "highs",
+      "freq_range": [
+        6000,
+        20000
+      ],
+      "target_db": -11.0,
+      "weight": 0.6
+    }
+  ],
+  "track_balance": {
+    "breaks": {
+      "level": -3.0,
+      "pan": 0.0,
+      "width": "moderate"
+    },
+    "kick": {
+      "level": -4.0,
+      "pan": 0.0,
+      "width": "mono"
+    },
+    "snare": {
+      "level": -3.0,
+      "pan": 0.0,
+      "width": "mono"
+    },
+    "sub_bass": {
+      "level": -5.0,
+      "pan": 0.0,
+      "width": "mono"
+    },
+    "bass": {
+      "level": -7.0,
+      "pan": 0.0,
+      "width": "mono"
+    },
+    "hihat": {
+      "level": -11.0,
+      "pan": 0.3,
+      "width": "wide"
+    },
+    "percussion": {
+      "level": -10.0,
+      "pan": 0.35,
+      "width": "wide"
+    },
+    "pads": {
+      "level": -12.0,
+      "pan": 0.2,
+      "width": "very_wide"
+    },
+    "synth": {
+      "level": -9.0,
+      "pan": 0.15,
+      "width": "wide"
+    },
+    "fx": {
+      "level": -14.0,
+      "pan": 0.4,
+      "width": "very_wide"
+    },
+    "lead": {
+      "level": -6.5,
+      "pan": 0.15,
+      "width": "very_wide"
+    },
+    "vocals": {
+      "level": -7.0,
+      "pan": 0.0,
+      "width": "moderate"
+    },
+    "wobble": {
+      "level": -6.0,
+      "pan": 0.0,
+      "width": "mono"
+    }
+  },
+  "role_eq": {
+    "snare": [
+      { "band": "low_mids", "freq_range": [120, 250], "gain_db": 2.0 },
+      { "band": "high_mids", "freq_range": [2000, 6000], "gain_db": 4.5 },
+      { "band": "highs", "freq_range": [6000, 20000], "gain_db": 3.0 }
+    ],
+    "kick": [
+      { "band": "sub_bass", "freq_range": [20, 60], "gain_db": 2.5 },
+      { "band": "highs", "freq_range": [6000, 20000], "gain_db": 2.0 }
+    ],
+    "vocals": [
+      { "band": "high_mids", "freq_range": [2000, 6000], "gain_db": 2.5 }
+    ],
+    "lead": [
+      { "band": "mids", "freq_range": [250, 2000], "gain_db": -1.0 },
+      { "band": "high_mids", "freq_range": [2000, 6000], "gain_db": 3.0 },
+      { "band": "highs", "freq_range": [6000, 20000], "gain_db": 3.5 }
+    ]
+  },
+  "highpass": {
+    "hihat": 400,
+    "percussion": 300,
+    "lead": 120,
+    "melody": 120,
+    "vocals": 100,
+    "pads": 100,
+    "fx": 200,
+    "sample": 80,
+    "breaks": 80,
+    "texture": 200,
+    "snare": 150
+  },
+  "mud_cut": {
+    "bass": { "band": "low_mids", "freq_range": [200, 400], "gain_db": -2.5 },
+    "sub_bass": { "band": "low_mids", "freq_range": [200, 400], "gain_db": -3.0 },
+    "wobble": { "band": "low_mids", "freq_range": [200, 400], "gain_db": -2.0 },
+    "snare": { "band": "low_mids", "freq_range": [300, 500], "gain_db": -2.0 },
+    "kick": { "band": "low_mids", "freq_range": [300, 500], "gain_db": -2.5 }
+  },
+  "master": {
+    "soft_clip": true,
+    "soft_clip_drive_db": 0.0,
+    "soft_clip_amount": 0.25,
+    "ceiling_dbtp": -1.0
+  },
+  "sidechain": {
+    "kick": {
+      "targets": ["bass", "sub_bass", "wobble"],
+      "amount_db": -2.5,
+      "attack_ms": 5.0,
+      "release_ms": 120.0
+    },
+    "snare_band": {
+      "targets": ["bass", "sub_bass"],
+      "amount_db": -3.5,
+      "band_range": [100, 300],
+      "attack_ms": 2.0,
+      "release_ms": 110.0
+    }
+  },
+  "compression": {
+    "bus": {
+      "threshold_db": -16.0,
+      "ratio": 2.0,
+      "attack_ms": 15,
+      "release_ms": 160,
+      "makeup_db": 0.0,
+      "style": "glue"
+    },
+    "breaks": {
+      "threshold_db": -18.0,
+      "ratio": 3.0,
+      "attack_ms": 8,
+      "release_ms": 100,
+      "makeup_db": 1.0
+    },
+    "bass": {
+      "threshold_db": -18.0,
+      "ratio": 3.0,
+      "attack_ms": 15,
+      "release_ms": 130,
+      "makeup_db": 1.0
+    },
+    "lead": {
+      "threshold_db": -18.0,
+      "ratio": 2.5,
+      "attack_ms": 10,
+      "release_ms": 110,
+      "makeup_db": 1.0
+    }
+  },
+  "manual_gain": {},
+  "role_override": {
+    "snt2": "synth"
+  },
+  "space": {
+    "snare": {
+      "reverb": { "amount": 0.22, "decay": 0.32, "tone": 0.42 },
+      "delay": { "time_ms": 220, "feedback": 0.18, "amount": 0.1 }
+    },
+    "vocals": {
+      "reverb": { "amount": 0.22, "decay": 0.4, "tone": 0.55 },
+      "delay": { "time_ms": 280, "feedback": 0.2, "amount": 0.12 }
+    },
+    "lead": {
+      "delay": { "time_ms": 170, "feedback": 0.25, "amount": 0.18 },
+      "reverb": { "amount": 0.15, "decay": 0.35, "tone": 0.5 }
+    },
+    "synth": {
+      "delay": { "time_ms": 160, "feedback": 0.22, "amount": 0.15 },
+      "reverb": { "amount": 0.12, "decay": 0.3, "tone": 0.5 }
+    },
+    "hihat": {
+      "delay": { "time_ms": 130, "feedback": 0.12, "amount": 0.06 }
+    },
+    "pads": {
+      "reverb": { "amount": 0.28, "decay": 0.5, "tone": 0.6 }
+    }
+  },
+  "fx_suggestions": [
+    "chopped breakbeats with tight parallel compression and a bit of vinyl grit",
+    "sub bass rides under the break; sidechain pads/bass to the kick",
+    "high-pass non-bass layers at 40 Hz to keep the bottom punchy",
+    "snare/clap layered with short room verb tail",
+    "swing on hi-hats and percussion, automated filter sweeps between sections",
+    "light saturation on the bass for movement"
+  ],
+  "description": "Брейкс: синкопированные брейкбит-барабаны, роллинг бас, широкие пады. Плотные ударные с параллельной компрессией, саб под брейком."
+}

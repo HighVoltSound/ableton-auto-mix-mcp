@@ -1,0 +1,26 @@
+{
+  "name": "balanced",
+  "label": "Neutral / Balanced",
+  "target_lufs": -13.0,
+  "target_lra": 6.0,
+  "tempo_range": [0, 300],
+  "stereo_width": "moderate",
+  "frequency_balance": [
+    {"band": "sub_bass", "freq_range": [20, 60], "target_db": -5.0, "weight": 0.9},
+    {"band": "bass", "freq_range": [60, 120], "target_db": -5.0, "weight": 0.9},
+    {"band": "low_mids", "freq_range": [120, 250], "target_db": -6.0, "weight": 0.7},
+    {"band": "mids", "freq_range": [250, 2000], "target_db": -6.0, "weight": 0.7},
+    {"band": "high_mids", "freq_range": [2000, 6000], "target_db": -7.0, "weight": 0.7},
+    {"band": "highs", "freq_range": [6000, 20000], "target_db": -11.0, "weight": 0.6}
+  ],
+  "track_balance": {},
+  "compression": {
+    "bus": {"ratio": 2.0, "attack_ms": 20, "release_ms": 150, "makeup_db": 0.0, "style": "glue"}
+  },
+  "fx_suggestions": [
+    "high-pass mud below 30-40 Hz on non-bass tracks",
+    "light glue compression on master",
+    "check mono compatibility of low end"
+  ],
+  "description": "Нейтральный стартовый профиль: сбалансированная частотная кривая, без жанровой агрессии. Используется как baseline."
+}

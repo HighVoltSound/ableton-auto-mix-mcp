@@ -1,0 +1,39 @@
+{
+  "name": "hip_hop",
+  "label": "Hip-Hop / Trap",
+  "target_lufs": -9.0,
+  "target_lra": 4.5,
+  "tempo_range": [60, 100],
+  "stereo_width": "moderate",
+  "frequency_balance": [
+    {"band": "sub_bass", "freq_range": [20, 60], "target_db": 0.0, "weight": 1.0},
+    {"band": "bass", "freq_range": [60, 120], "target_db": -3.0, "weight": 1.0},
+    {"band": "low_mids", "freq_range": [120, 250], "target_db": -6.0, "weight": 0.7},
+    {"band": "mids", "freq_range": [250, 2000], "target_db": -8.0, "weight": 0.6},
+    {"band": "high_mids", "freq_range": [2000, 6000], "target_db": -7.0, "weight": 0.8},
+    {"band": "highs", "freq_range": [6000, 20000], "target_db": -11.0, "weight": 0.5}
+  ],
+  "track_balance": {
+    "808": {"level": -3.0, "pan": 0.0, "width": "mono"},
+    "kick": {"level": -4.0, "pan": 0.0, "width": "mono"},
+    "snare": {"level": -8.0, "pan": 0.0, "width": "mono"},
+    "percussion": {"level": -10.0, "pan": 0.35, "width": "moderate"},
+    "hihat": {"level": -12.0, "pan": 0.3, "width": "moderate"},
+    "vocals": {"level": -6.0, "pan": 0.0, "width": "moderate"},
+    "melody": {"level": -10.0, "pan": 0.1, "width": "moderate"},
+    "fx": {"level": -15.0, "pan": 0.4, "width": "wide"}
+  },
+  "compression": {
+    "bus": {"ratio": 3.0, "attack_ms": 15, "release_ms": 150, "makeup_db": 0.0, "style": "glue"},
+    "808": {"ratio": 6.0, "attack_ms": 20, "release_ms": 120, "makeup_db": 3.0},
+    "vocals": {"ratio": 4.0, "attack_ms": 10, "release_ms": 80, "makeup_db": 1.0}
+  },
+  "fx_suggestions": [
+    "808 heavy compression with fast release for consistent sustain",
+    "sidechain ducking on 808 to kick",
+    "parallel compression on drums",
+    "vocal de-esser and light saturation",
+    "mono 808 and kick below 100 Hz"
+  ],
+  "description": "Современный хип-хоп: жирные 808 внизу, ударный кик, вокал впереди. Умеренная ширина, плотная бас-секция."
+}

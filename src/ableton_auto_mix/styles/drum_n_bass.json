@@ -1,0 +1,41 @@
+{
+  "name": "drum_n_bass",
+  "label": "Drum & Bass / Jungle",
+  "target_lufs": -7.5,
+  "target_lra": 4.5,
+  "tempo_range": [168, 180],
+  "stereo_width": "wide",
+  "frequency_balance": [
+    {"band": "sub_bass", "freq_range": [20, 60], "target_db": -2.0, "weight": 1.0},
+    {"band": "bass", "freq_range": [60, 120], "target_db": -5.0, "weight": 0.9},
+    {"band": "low_mids", "freq_range": [120, 250], "target_db": -6.0, "weight": 0.7},
+    {"band": "mids", "freq_range": [250, 2000], "target_db": -7.0, "weight": 0.6},
+    {"band": "high_mids", "freq_range": [2000, 6000], "target_db": -7.0, "weight": 0.8},
+    {"band": "highs", "freq_range": [6000, 20000], "target_db": -11.0, "weight": 0.6}
+  ],
+  "track_balance": {
+    "breaks": {"level": -4.0, "pan": 0.0, "width": "moderate"},
+    "kick": {"level": -5.0, "pan": 0.0, "width": "mono"},
+    "snare": {"level": -5.0, "pan": 0.0, "width": "mono"},
+    "sub_bass": {"level": -3.0, "pan": 0.0, "width": "mono"},
+    "bass": {"level": -8.0, "pan": 0.0, "width": "mono"},
+    "hihat": {"level": -11.0, "pan": 0.3, "width": "wide"},
+    "pads": {"level": -12.0, "pan": 0.2, "width": "very_wide"},
+    "fx": {"level": -14.0, "pan": 0.4, "width": "wide"}
+  },
+  "compression": {
+    "bus": {"ratio": 3.0, "attack_ms": 12, "release_ms": 120, "makeup_db": 0.0, "style": "glue"},
+    "breaks": {"ratio": 5.0, "attack_ms": 5, "release_ms": 80, "makeup_db": 1.0},
+    "bass": {"ratio": 4.0, "attack_ms": 15, "release_ms": 100, "makeup_db": 2.0},
+    "snare": {"ratio": 3.5, "attack_ms": 8, "release_ms": 90, "makeup_db": 0.0}
+  },
+  "fx_suggestions": [
+    "tight drum processing: chopped breaks with parallel compression",
+    "long sub bass notes (half-bar+) with clean sine, sidechain to drums",
+    "fast-roll hi-hats with swing at 170+ BPM",
+    "reese bass: detuned saw stacks, mono below 100 Hz, wide above",
+    "sidechain pads and bass hard to the break",
+    "high-pass non-bass layers at 40 Hz to keep the low end clean"
+  ],
+  "description": "Драм-н-бейс: рваные брейки на 170+, чистый глубокий саб, риз-басы, быстрые хэты, плотная компрессия ударных."
+}

@@ -1,0 +1,40 @@
+{
+  "name": "dubstep",
+  "label": "Dubstep / Brostep",
+  "target_lufs": -7.0,
+  "target_lra": 3.5,
+  "tempo_range": [140, 145],
+  "stereo_width": "moderate",
+  "frequency_balance": [
+    {"band": "sub_bass", "freq_range": [20, 60], "target_db": -1.0, "weight": 1.0},
+    {"band": "bass", "freq_range": [60, 120], "target_db": -4.0, "weight": 1.0},
+    {"band": "low_mids", "freq_range": [120, 250], "target_db": -5.0, "weight": 0.8},
+    {"band": "mids", "freq_range": [250, 2000], "target_db": -6.0, "weight": 0.8},
+    {"band": "high_mids", "freq_range": [2000, 6000], "target_db": -8.0, "weight": 0.7},
+    {"band": "highs", "freq_range": [6000, 20000], "target_db": -12.0, "weight": 0.5}
+  ],
+  "track_balance": {
+    "sub_bass": {"level": -2.0, "pan": 0.0, "width": "mono"},
+    "kick": {"level": -4.0, "pan": 0.0, "width": "mono"},
+    "wobble": {"level": -6.0, "pan": 0.0, "width": "mono"},
+    "snare": {"level": -6.0, "pan": 0.0, "width": "mono"},
+    "percussion": {"level": -11.0, "pan": 0.3, "width": "moderate"},
+    "hihat": {"level": -12.0, "pan": 0.25, "width": "moderate"},
+    "fx": {"level": -13.0, "pan": 0.35, "width": "wide"}
+  },
+  "compression": {
+    "bus": {"ratio": 4.0, "attack_ms": 10, "release_ms": 110, "makeup_db": 0.0, "style": "glue"},
+    "wobble": {"ratio": 5.0, "attack_ms": 8, "release_ms": 90, "makeup_db": 2.0},
+    "sub_bass": {"ratio": 6.0, "attack_ms": 15, "release_ms": 100, "makeup_db": 2.0},
+    "snare": {"ratio": 4.0, "attack_ms": 5, "release_ms": 120, "makeup_db": 0.0}
+  },
+  "fx_suggestions": [
+    "sub bass strictly mono below 90 Hz, wobble/growl mono in the low-mid",
+    "sidechain everything to the kick, hard ducking on the drop",
+    "layered snare/clap with a big room verb tail",
+    "OTT or multiband compression on wobble basses for grit",
+    "harmonic distortion/saturation on the mid-range growl, keep sub clean",
+    "automate low-pass filter sweeps between sections"
+  ],
+  "description": "Дабстеп: огромный чистый саб внизу, агрессивный гроул-вубл в лоу-миде, ударные снэры, жёсткий сайдчейн и многослойная компрессия."
+}

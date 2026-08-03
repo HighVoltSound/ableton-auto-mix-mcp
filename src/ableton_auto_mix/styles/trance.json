@@ -1,0 +1,42 @@
+{
+  "name": "trance",
+  "label": "Trance / Uplifting",
+  "target_lufs": -8.5,
+  "target_lra": 4.0,
+  "tempo_range": [128, 140],
+  "stereo_width": "very_wide",
+  "frequency_balance": [
+    {"band": "sub_bass", "freq_range": [20, 60], "target_db": -3.0, "weight": 0.9},
+    {"band": "bass", "freq_range": [60, 120], "target_db": -4.0, "weight": 0.9},
+    {"band": "low_mids", "freq_range": [120, 250], "target_db": -7.0, "weight": 0.6},
+    {"band": "mids", "freq_range": [250, 2000], "target_db": -7.0, "weight": 0.6},
+    {"band": "high_mids", "freq_range": [2000, 6000], "target_db": -8.0, "weight": 0.7},
+    {"band": "highs", "freq_range": [6000, 20000], "target_db": -12.0, "weight": 0.5}
+  ],
+  "track_balance": {
+    "kick": {"level": -3.0, "pan": 0.0, "width": "mono"},
+    "sub_bass": {"level": -6.0, "pan": 0.0, "width": "mono"},
+    "bass": {"level": -8.0, "pan": 0.0, "width": "mono"},
+    "lead": {"level": -7.0, "pan": 0.1, "width": "wide"},
+    "pads": {"level": -11.0, "pan": 0.25, "width": "very_wide"},
+    "pluck": {"level": -10.0, "pan": 0.2, "width": "wide"},
+    "percussion": {"level": -13.0, "pan": 0.35, "width": "wide"},
+    "hihat": {"level": -14.0, "pan": 0.3, "width": "wide"},
+    "fx": {"level": -15.0, "pan": 0.4, "width": "very_wide"}
+  },
+  "compression": {
+    "bus": {"ratio": 3.0, "attack_ms": 15, "release_ms": 130, "makeup_db": 0.0, "style": "glue"},
+    "kick": {"ratio": 5.0, "attack_ms": 5, "release_ms": 80, "makeup_db": 2.0},
+    "lead": {"ratio": 3.5, "attack_ms": 12, "release_ms": 100, "makeup_db": 1.0},
+    "bass": {"ratio": 4.0, "attack_ms": 15, "release_ms": 120, "makeup_db": 1.0}
+  },
+  "fx_suggestions": [
+    "sidechain pads, bass and plucks to the kick (offbeat pumping)",
+    "supersaw leads: 7+ voices, slight detune, chorus and width",
+    "long reverb send (3-8s) on leads and pads",
+    "white noise risers into drops",
+    "high-pass everything except kick and bass at 30-40 Hz",
+    "ducking on pad layers for the rolling offbeat bass to breathe"
+  ],
+  "description": "Ап-лифтинг транс: оффбитный роллинг-бас, жирный кик на каждую долю, широкие supersaw-лиды и пады, длинный реверб, пульсирующий сайдчейн."
+}

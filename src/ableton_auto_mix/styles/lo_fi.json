@@ -1,0 +1,38 @@
+{
+  "name": "lo_fi",
+  "label": "Lo-Fi / Chill",
+  "target_lufs": -14.0,
+  "target_lra": 6.5,
+  "tempo_range": [60, 95],
+  "stereo_width": "moderate",
+  "frequency_balance": [
+    {"band": "sub_bass", "freq_range": [20, 60], "target_db": -6.0, "weight": 0.8},
+    {"band": "bass", "freq_range": [60, 120], "target_db": -5.0, "weight": 0.8},
+    {"band": "low_mids", "freq_range": [120, 250], "target_db": -4.0, "weight": 0.8},
+    {"band": "mids", "freq_range": [250, 2000], "target_db": -5.0, "weight": 0.8},
+    {"band": "high_mids", "freq_range": [2000, 6000], "target_db": -8.0, "weight": 0.5},
+    {"band": "highs", "freq_range": [6000, 20000], "target_db": -14.0, "weight": 0.3}
+  ],
+  "track_balance": {
+    "sample": {"level": -6.0, "pan": 0.0, "width": "moderate"},
+    "bass": {"level": -8.0, "pan": 0.0, "width": "mono"},
+    "kick": {"level": -7.0, "pan": 0.0, "width": "mono"},
+    "snare": {"level": -9.0, "pan": 0.1, "width": "mono"},
+    "hihat": {"level": -12.0, "pan": 0.2, "width": "moderate"},
+    "melody": {"level": -10.0, "pan": 0.15, "width": "moderate"},
+    "vinyl_crackle": {"level": -20.0, "pan": 0.3, "width": "very_wide"},
+    "fx": {"level": -16.0, "pan": 0.35, "width": "wide"}
+  },
+  "compression": {
+    "bus": {"ratio": 2.0, "attack_ms": 25, "release_ms": 200, "makeup_db": 0.0, "style": "glue"},
+    "bass": {"ratio": 3.0, "attack_ms": 15, "release_ms": 150, "makeup_db": 1.0}
+  },
+  "fx_suggestions": [
+    "low-pass filter on master around 12-14 kHz for warmth",
+    "tape/vinyl saturation for character",
+    "reverb with long tail on melody",
+    "light wow/flutter modulation",
+    "warm analog EQ curve (bass bump, treble rolloff)"
+  ],
+  "description": "Тёплый lo-fi: заваленные верха, мягкий низ, виниловый хруст и сатурация. Намеренно «неидеальный» баланс."
+}

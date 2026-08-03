@@ -1,0 +1,37 @@
+{
+  "name": "ambient",
+  "label": "Ambient / Cinematic",
+  "target_lufs": -18.0,
+  "target_lra": 9.0,
+  "tempo_range": [40, 80],
+  "stereo_width": "very_wide",
+  "frequency_balance": [
+    {"band": "sub_bass", "freq_range": [20, 60], "target_db": -8.0, "weight": 0.5},
+    {"band": "bass", "freq_range": [60, 120], "target_db": -8.0, "weight": 0.6},
+    {"band": "low_mids", "freq_range": [120, 250], "target_db": -6.0, "weight": 0.6},
+    {"band": "mids", "freq_range": [250, 2000], "target_db": -4.0, "weight": 0.8},
+    {"band": "high_mids", "freq_range": [2000, 6000], "target_db": -7.0, "weight": 0.6},
+    {"band": "highs", "freq_range": [6000, 20000], "target_db": -11.0, "weight": 0.5}
+  ],
+  "track_balance": {
+    "pads": {"level": -6.0, "pan": 0.3, "width": "very_wide"},
+    "drone": {"level": -8.0, "pan": 0.2, "width": "very_wide"},
+    "texture": {"level": -10.0, "pan": 0.4, "width": "very_wide"},
+    "melody": {"level": -9.0, "pan": 0.2, "width": "wide"},
+    "field_rec": {"level": -12.0, "pan": 0.35, "width": "very_wide"},
+    "bass": {"level": -10.0, "pan": 0.0, "width": "moderate"},
+    "fx": {"level": -13.0, "pan": 0.45, "width": "very_wide"}
+  },
+  "compression": {
+    "bus": {"ratio": 1.5, "attack_ms": 30, "release_ms": 250, "makeup_db": 0.0, "style": "glue"},
+    "pads": {"ratio": 2.0, "attack_ms": 25, "release_ms": 200, "makeup_db": 0.0}
+  },
+  "fx_suggestions": [
+    "heavy reverb sends with long decay (5-15s)",
+    "slow LFO on filter cutoff for movement",
+    "stereo widening via mid/side processing",
+    "high-pass texture layers below 60 Hz to keep bottom clean",
+    "minimal compression to preserve dynamics"
+  ],
+  "description": "Просторный эмбиент: широкие пады, много воздуха и реверба, минимальная компрессия, большой динамический диапазон."
+}
