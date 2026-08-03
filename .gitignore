@@ -22,3 +22,14 @@ renders/*.asd
 # OS
 .DS_Store
 Thumbs.db
+
+# Local helper files (not part of the package)
+bump_version.py
+comment_templates.txt
+make_waveform.py
+post_X.txt
+post_hackernews.txt
+reddit_post_ableton.txt
+reddit_post_local_llama.txt
+render_raw_mix.py
+release_notes_*.md

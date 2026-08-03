@@ -1,9 +1,0 @@
-Open-source MCP server that lets an AI auto-mix & master Ableton Live tracks into 11 styles.
-
-Demo: https://soundcloud.com/basadelic/demo_before_after
-
-Repo: https://github.com/HighVoltSound/ableton-auto-mix-mcp
-
-Free, MIT, 100% local.
-
-#Ableton #MCP #MusicProduction
