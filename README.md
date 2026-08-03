@@ -134,4 +134,4 @@ python tests/test_smoke.py   # 5 smoke-тестов: рендер → микс �
 
 ## Лицензия
 
-[MIT](LICENSE) © 2026 MusicMixCode / HighV
+[MIT](LICENSE) © 2026 MusicMixCode / HighVoltSound
