@@ -2,6 +2,11 @@
 
 > 🇷🇺 [Читать на русском](README.ru.md)
 
+[![PyPI](https://img.shields.io/pypi/v/ableton-auto-mix-mcp.svg)](https://pypi.org/project/ableton-auto-mix-mcp/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
+[![CI](https://github.com/HighVoltSound/ableton-auto-mix-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/HighVoltSound/ableton-auto-mix-mcp/actions)
+[![Glama score](https://glama.ai/mcp/servers/HighVoltSound/ableton-auto-mix-mcp/badges/score.svg)](https://glama.ai/mcp/servers/HighVoltSound/ableton-auto-mix-mcp)
+
 ![Demo waveform — before vs after](assets/demo_waveform.png)
 
 An MCP server for auto-mixing and auto-mastering in Ableton Live **tuned to a musical style/genre**.
