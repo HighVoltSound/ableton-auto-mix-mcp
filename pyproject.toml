@@ -1,6 +1,6 @@
 [project]
 name = "ableton-auto-mix-mcp"
-version = "0.1.1"
+version = "0.1.2"
 description = "MusicMixCode — MCP server for AI-driven auto-mixing and mastering in Ableton Live: style-based mixing, preview renders, release checks"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -29,6 +29,7 @@ dependencies = [
     "numpy>=1.24",
     "soundfile>=0.12",
     "pydantic>=2.0",
+    "uvicorn>=0.30",
 ]
 
 [project.urls]

@@ -1,0 +1,23 @@
+# Title options:
+# A) I made an MCP server that lets an LLM agent auto-mix and master Ableton Live tracks into 11 genre styles
+# B) Open-source MCP server: give your agent audio mixing skills (LUFS correction, sidechain, EQ, release check)
+
+Body:
+
+An MCP server that gives an LLM agent (opencode / Claude Code / Claude Desktop) tools to auto-mix and auto-master Ableton Live tracks across 11 style profiles. It runs analysis + preview entirely offline (librosa/pyloudnorm/numpy) — no Ableton needed unless you want it to apply changes back to Live via AbletonOSC.
+
+Demo (before → after): https://soundcloud.com/basadelic/demo_before_after
+
+The hooks:
+- analyze_audio / analyze_render_dir — per-track LUFS/LRA, spectral bands, stereo width
+- get_style / list_styles — 11 JSON genre profiles (techno, hip_hop, pop, lo_fi, ambient, trance, breaks, dubstep, drum_n_bass, trap) each with a target spectral curve + instrument balance
+- auto_mix(style, render_dir, dry_run) — proposes corrections vs the profile, applies to Live when dry_run=false
+- preview_mix — renders a fully mastered stereo WAV offline: sidechain (kick→bass, snare-band Dynamic EQ), per-role HPF, 200–500 Hz mud-cut, tanh soft-clipper, LUFS normalization, true-peak lookahead limiter (4x oversampling), TPDF dither
+- release_check — scores LUFS/LRA/TP/RMS/sub-mid-gap against top-label targets → ready/needs_work
+
+Design note: the server is pure tools + metrics. The LLM makes the decisions (it doesn't "auto-mix" on its own) — dry-run report → preview → human/agent applies. Keeps it auditable and useful as a building block.
+
+MIT, no cloud, no account:
+https://github.com/HighVoltSound/ableton-auto-mix-mcp
+
+Install: `pip install -e .` then register as an MCP server. Happy to take PRs for more style profiles.

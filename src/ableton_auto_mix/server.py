@@ -274,11 +274,33 @@ def main() -> None:
         level=logging.INFO,
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     )
-    logger.info("starting ableton-auto-mix-mcp (stdio transport)")
-    try:
-        mcp.run(transport="stdio")
-    finally:
-        close_client()
+    transport = os.environ.get(
+        "ABLETON_AUTO_MIX_TRANSPORT", "stdio"
+    ).strip().lower()
+    if transport in ("http", "streamable-http", "streamable_http"):
+        _run_http()
+    else:
+        logger.info("starting ableton-auto-mix-mcp (stdio transport)")
+        try:
+            mcp.run(transport="stdio")
+        finally:
+            close_client()
+
+
+def _run_http() -> None:
+    """Run the MCP server over streamable HTTP (for remote/container deploys).
+
+    Set ABLETON_AUTO_MIX_TRANSPORT=http to enable. Host/port are read from
+    environment (HOST, PORT) with sane defaults. Analysis and preview tools
+    work fully; Ableton-specific tools report "not connected".
+    """
+    import uvicorn  # noqa: PLC0415
+
+    host = os.environ.get("ABLETON_AUTO_MIX_HOST", "0.0.0.0")
+    port = int(os.environ.get("ABLETON_AUTO_MIX_PORT", "8000"))
+    app = mcp.streamable_http_app()
+    logger.info("starting ableton-auto-mix-mcp (streamable http) on %s:%s", host, port)
+    uvicorn.run(app, host=host, port=port, log_level="info")
 
 
 if __name__ == "__main__":
