@@ -1,5 +1,7 @@
 # MusicMixCode — Ableton Auto-Mix MCP
 
+> 🇬🇧 [Read this in English](README.en.md)
+
 MCP-сервер для автосведения (auto-mixing) и авто-мастеринга в Ableton Live **под музыкальный стиль/жанр**.
 ИИ-агент (opencode, Claude Code, Claude Desktop...) анализирует рендеры треков, сравнивает их с профилем
 стиля и выдаёт/применяет корректировки: уровни, панорама, EQ-подсказки, компрессия — и дополнительно
