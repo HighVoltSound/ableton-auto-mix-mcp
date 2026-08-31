@@ -1,0 +1,44 @@
+{
+  "name": "country",
+  "label": "Country / Americana",
+  "target_lufs": -12.0,
+  "target_lra": 6.0,
+  "tempo_range": [80, 160],
+  "stereo_width": "moderate",
+  "frequency_balance": [
+    {"band": "sub_bass", "freq_range": [20, 60], "target_db": -8.0, "weight": 0.6},
+    {"band": "bass", "freq_range": [60, 120], "target_db": -2.0, "weight": 0.9},
+    {"band": "low_mids", "freq_range": [120, 250], "target_db": 0.0, "weight": 1.0},
+    {"band": "mids", "freq_range": [250, 2000], "target_db": -3.0, "weight": 0.8},
+    {"band": "high_mids", "freq_range": [2000, 6000], "target_db": -2.0, "weight": 0.9},
+    {"band": "highs", "freq_range": [6000, 20000], "target_db": -5.0, "weight": 0.7}
+  ],
+  "track_balance": {
+    "kick": {"level": -5.0, "pan": 0.0, "width": "mono"},
+    "bass": {"level": -4.0, "pan": 0.0, "width": "mono"},
+    "snare": {"level": -6.0, "pan": 0.0, "width": "narrow"},
+    "acoustic_guitar": {"level": -6.0, "pan": -0.2, "width": "moderate"},
+    "electric_guitar": {"level": -8.0, "pan": 0.2, "width": "wide"},
+    "pedal_steel": {"level": -10.0, "pan": 0.3, "width": "wide"},
+    "fiddle": {"level": -9.0, "pan": -0.25, "width": "moderate"},
+    "vocal": {"level": -4.0, "pan": 0.0, "width": "narrow"},
+    "dobro": {"level": -11.0, "pan": 0.15, "width": "narrow"}
+  },
+  "compression": {
+    "bus": {"ratio": 2.0, "attack_ms": 15, "release_ms": 180, "makeup_db": 0.0, "style": "glue"},
+    "vocal": {"ratio": 3.0, "attack_ms": 8, "release_ms": 120, "makeup_db": 1.0},
+    "kick": {"ratio": 3.5, "attack_ms": 5, "release_ms": 80, "makeup_db": 1.0}
+  },
+  "highpass": {
+    "electric_guitar": 80,
+    "fiddle": 100,
+    "dobro": 100
+  },
+  "fx_suggestions": [
+    "room reverb on drums for live feel",
+    "slapback delay on vocals for Nashville sound",
+    "light compression on acoustic guitar for strum consistency",
+    "double bass pedal for drive"
+  ],
+  "description": "Нэшвиллский звук: чистый вокал в центре, акустические гитары, стил-гитара и фиддл. Тёплое пространство, минимум квантайзинга."
+}

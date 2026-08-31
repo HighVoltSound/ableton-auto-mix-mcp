@@ -37,13 +37,13 @@ class AbletonClient:
         self.send_port = send_port
         self.recv_port = recv_port
         self._client = udp_client.SimpleUDPClient(host, send_port)
-        self._server: ThreadingOSCServer | None = None
+        self._server: ThreadingOSCUDPServer | None = None
 
     # ---------------------------------------------------------------- setup
     def connect(self) -> None:
         dispatcher = Dispatcher()
         dispatcher.set_default_handler(self._on_message)
-        self._server = ThreadingOSCServer((self.host, self.recv_port), dispatcher)
+        self._server = ThreadingOSCUDPServer((self.host, self.recv_port), dispatcher)
         self._server.daemon_threads = True
         self._server.serve_forever()
 
@@ -91,30 +91,30 @@ class AbletonClient:
         n = int(self.request("/live/song/get/num_tracks")[0])
         names = []
         for i in range(n):
-            names.append(str(self.request(f"/live/track/get/name", i)[0]))
+            names.append(str(self.request("/live/track/get/name", i)[0]))
         return names
 
     def get_track_info(self, index: int) -> dict[str, Any]:
         return {
             "index": index,
-            "name": str(self.request(f"/live/track/get/name", index)[0]),
-            "volume": float(self.request(f"/live/track/get/volume", index)[0]),
-            "pan": float(self.request(f"/live/track/get/pan", index)[0]),
-            "mute": bool(self.request(f"/live/track/get/mute", index)[0]),
-            "solo": bool(self.request(f"/live/track/get/solo", index)[0]),
+            "name": str(self.request("/live/track/get/name", index)[0]),
+            "volume": float(self.request("/live/track/get/volume", index)[0]),
+            "pan": float(self.request("/live/track/get/pan", index)[0]),
+            "mute": bool(self.request("/live/track/get/mute", index)[0]),
+            "solo": bool(self.request("/live/track/get/solo", index)[0]),
         }
 
     def set_track_volume(self, index: int, db: float) -> None:
-        self.send(f"/live/track/set/volume", index, db)
+        self.send("/live/track/set/volume", index, db)
 
     def set_track_pan(self, index: int, pan: float) -> None:
-        self.send(f"/live/track/set/pan", index, pan)
+        self.send("/live/track/set/pan", index, pan)
 
     def set_track_mute(self, index: int, muted: bool) -> None:
-        self.send(f"/live/track/set/mute", index, int(muted))
+        self.send("/live/track/set/mute", index, int(muted))
 
     def set_track_solo(self, index: int, solo: bool) -> None:
-        self.send(f"/live/track/set/solo", index, int(solo))
+        self.send("/live/track/set/solo", index, int(solo))
 
 
 _client: AbletonClient | None = None

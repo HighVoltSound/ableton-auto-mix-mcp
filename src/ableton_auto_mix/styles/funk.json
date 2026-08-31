@@ -1,0 +1,42 @@
+{
+  "name": "funk",
+  "label": "Funk / Groove",
+  "target_lufs": -11.0,
+  "target_lra": 5.0,
+  "tempo_range": [90, 130],
+  "stereo_width": "moderate",
+  "frequency_balance": [
+    {"band": "sub_bass", "freq_range": [20, 60], "target_db": -4.0, "weight": 0.8},
+    {"band": "bass", "freq_range": [60, 120], "target_db": 0.0, "weight": 1.0},
+    {"band": "low_mids", "freq_range": [120, 250], "target_db": -3.0, "weight": 0.8},
+    {"band": "mids", "freq_range": [250, 2000], "target_db": -5.0, "weight": 0.7},
+    {"band": "high_mids", "freq_range": [2000, 6000], "target_db": -4.0, "weight": 0.8},
+    {"band": "highs", "freq_range": [6000, 20000], "target_db": -8.0, "weight": 0.5}
+  ],
+  "track_balance": {
+    "kick": {"level": -4.0, "pan": 0.0, "width": "mono"},
+    "bass": {"level": -2.0, "pan": 0.0, "width": "mono"},
+    "snare": {"level": -6.0, "pan": 0.0, "width": "narrow"},
+    "hihat": {"level": -12.0, "pan": 0.3, "width": "wide"},
+    "guitar": {"level": -8.0, "pan": 0.25, "width": "wide"},
+    "keys": {"level": -10.0, "pan": -0.2, "width": "moderate"},
+    "vocal": {"level": -6.0, "pan": 0.0, "width": "narrow"},
+    "horns": {"level": -10.0, "pan": 0.3, "width": "wide"},
+    "percussion": {"level": -14.0, "pan": 0.4, "width": "very_wide"}
+  },
+  "compression": {
+    "bus": {"ratio": 2.5, "attack_ms": 15, "release_ms": 150, "makeup_db": 0.0, "style": "glue"},
+    "kick": {"ratio": 4.0, "attack_ms": 5, "release_ms": 80, "makeup_db": 1.5},
+    "bass": {"ratio": 3.0, "attack_ms": 10, "release_ms": 120, "makeup_db": 1.0}
+  },
+  "sidechain": {
+    "kick_duck_bass": {"amount_db": -2.0, "attack_ms": 5, "release_ms": 100}
+  },
+  "fx_suggestions": [
+    "sidechain bass to kick for pocket groove",
+    "light compression on guitar for funk tightness",
+    "room reverb on snare for live feel",
+    "boost 2-4 kHz on bass for growl"
+  ],
+  "description": "Винтажный грув: чёткий бас, упругий кик, сухой снейр. Лёгкий сайдчейн, минимум ревера — живое ощущение."
+}

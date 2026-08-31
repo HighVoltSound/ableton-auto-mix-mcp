@@ -6,12 +6,17 @@ current state of a project without relying on realtime Ableton metering.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 
 import numpy as np
 import pyloudnorm as pyln
 import soundfile as sf
 from scipy.signal import butter, resample_poly, sosfiltfilt
+
+from .logging_utils import get_logger
+
+_log = get_logger("analyzer")
 
 BANDS = [
     ("sub_bass", 20.0, 60.0),
@@ -120,18 +125,30 @@ def analyze_track(path: str) -> TrackAnalysis:
     )
 
 
-def analyze_directory(directory: str, pattern: str = "*.wav") -> list[TrackAnalysis]:
+def analyze_directory(
+    directory: str,
+    pattern: str = "*.wav",
+    progress_callback: Callable[[str, int, str], None] | None = None,
+) -> list[TrackAnalysis]:
     """Analyze every WAV in a directory (one per render). Skips any file that
     looks like a previously rendered preview mix."""
     import glob
     import os
 
+    paths = sorted(glob.glob(os.path.join(directory, pattern)))
+    paths = [p for p in paths if not os.path.basename(p).lower().startswith("preview_")]
+    total = len(paths)
+    _log.info("Analyzing %d tracks in %s", total, directory)
     results = []
-    for path in sorted(glob.glob(os.path.join(directory, pattern))):
-        if os.path.basename(path).lower().startswith("preview_"):
-            continue
+    for idx, path in enumerate(paths):
+        if progress_callback:
+            pct = int(90 * (idx + 1) / max(total, 1))
+            name = os.path.basename(path).rsplit(".", 1)[0]
+            progress_callback("analyzing", pct, f"Track {idx + 1}/{total}: {name}")
         try:
             results.append(analyze_track(path))
         except Exception as exc:  # noqa: BLE001
-            raise RuntimeError(f"Failed to analyze {path}: {exc}") from exc
+            _log.warning("Skipping %s: %s", path, exc)
+            continue
+    _log.info("Successfully analyzed %d/%d tracks", len(results), total)
     return results

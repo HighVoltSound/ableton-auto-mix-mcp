@@ -1,0 +1,21 @@
+[package]
+name = "stereo_eblet_3d_concept2"
+version = "1.0.0"
+edition = "2021"
+authors = ["MusicMixCode"]
+description = "Stereo Eblet 3D Concept 2 - Binaural 3D Head Spatializer with Custom GUI"
+
+[lib]
+name = "stereo_eblet_3d_concept2"
+crate-type = ["cdylib"]
+
+[dependencies]
+image = "0.24"
+nih_plug = { git = "https://github.com/robbert-vdh/nih-plug.git", features = ["assert_process_allocs", "vst3"] }
+nih_plug_egui = { git = "https://github.com/robbert-vdh/nih-plug.git" }
+serde = { version = "1", features = ["derive"] }
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+strip = "symbols"

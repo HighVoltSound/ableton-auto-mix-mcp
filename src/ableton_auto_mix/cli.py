@@ -36,17 +36,19 @@ def _p(data: dict[str, Any] | list[Any]) -> None:
 # command implementations
 # --------------------------------------------------------------------------
 def cmd_styles(_args: argparse.Namespace) -> None:
-    _p([
-        {
-            "name": p.name,
-            "label": p.label,
-            "target_lufs": p.target_lufs,
-            "target_lra": p.target_lra,
-            "stereo_width": p.stereo_width,
-            "description": p.description,
-        }
-        for p in profiles.list_profiles()
-    ])
+    _p(
+        [
+            {
+                "name": p.name,
+                "label": p.label,
+                "target_lufs": p.target_lufs,
+                "target_lra": p.target_lra,
+                "stereo_width": p.stereo_width,
+                "description": p.description,
+            }
+            for p in profiles.list_profiles()
+        ]
+    )
 
 
 def cmd_style(args: argparse.Namespace) -> None:
@@ -57,20 +59,22 @@ def cmd_analyze(args: argparse.Namespace) -> None:
     results = analyzer.analyze_directory(args.render_dir, args.pattern)
     if not results:
         sys.exit(f"No {args.pattern} files found in {args.render_dir}")
-    _p([
-        {
-            "name": r.name,
-            "path": r.path,
-            "rms_db": round(r.rms_db, 1),
-            "peak_db": round(r.peak_db, 1),
-            "true_peak_dbtp": round(r.true_peak_dbtp, 1),
-            "lufs": round(r.lufs, 1),
-            "lra": round(r.lra, 1),
-            "stereo_width": round(r.stereo_width, 3),
-            "band_energy_db": {k: round(v, 1) for k, v in r.bandwidth_db.items()},
-        }
-        for r in results
-    ])
+    _p(
+        [
+            {
+                "name": r.name,
+                "path": r.path,
+                "rms_db": round(r.rms_db, 1),
+                "peak_db": round(r.peak_db, 1),
+                "true_peak_dbtp": round(r.true_peak_dbtp, 1),
+                "lufs": round(r.lufs, 1),
+                "lra": round(r.lra, 1),
+                "stereo_width": round(r.stereo_width, 3),
+                "band_energy_db": {k: round(v, 1) for k, v in r.bandwidth_db.items()},
+            }
+            for r in results
+        ]
+    )
 
 
 def cmd_suggest(args: argparse.Namespace) -> None:
@@ -96,15 +100,17 @@ def cmd_preview(args: argparse.Namespace) -> None:
         for pair in args.manual_gain.split(","):
             name, _, db = pair.strip().partition("=")
             manual_gain[name.strip()] = float(db)
-    _p(preview.render_preview_mix(
-        args.render_dir,
-        profile,
-        pattern=args.pattern,
-        output_path=args.output,
-        max_duration=args.max_duration,
-        manual_gain=manual_gain or None,
-        sidechain_db=args.sidechain_db,
-    ))
+    _p(
+        preview.render_preview_mix(
+            args.render_dir,
+            profile,
+            pattern=args.pattern,
+            output_path=args.output,
+            max_duration=args.max_duration,
+            manual_gain=manual_gain or None,
+            sidechain_db=args.sidechain_db,
+        )
+    )
 
 
 def cmd_conflicts(args: argparse.Namespace) -> None:
@@ -112,11 +118,13 @@ def cmd_conflicts(args: argparse.Namespace) -> None:
     if not results:
         sys.exit(f"No {args.pattern} files found in {args.render_dir}")
     conflicts = qa.analyze_conflicts(results)
-    _p({
-        "tracks_analyzed": [a.name for a in results],
-        "conflicts_found": len(conflicts),
-        "conflicts": conflicts,
-    })
+    _p(
+        {
+            "tracks_analyzed": [a.name for a in results],
+            "conflicts_found": len(conflicts),
+            "conflicts": conflicts,
+        }
+    )
 
 
 def cmd_release(args: argparse.Namespace) -> None:
@@ -161,27 +169,46 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("preview", help="render a mastered preview mix WAV")
     p.add_argument("style")
     _add_render_args(p)
-    p.add_argument("--output", help="output WAV path (default <render_dir>/preview_<style>.wav)")
+    p.add_argument(
+        "--output", help="output WAV path (default <render_dir>/preview_<style>.wav)"
+    )
     p.add_argument("--max-duration", type=float, help="cap preview length in seconds")
-    p.add_argument("--manual-gain", help='per-file gain in dB, comma list, e.g. "snt2=-4.0,bass=2.0"')
-    p.add_argument("--sidechain-db", type=float, help="flat snare sidechain ducking in dB (e.g. -4.0)")
+    p.add_argument(
+        "--manual-gain",
+        help='per-file gain in dB, comma list, e.g. "snt2=-4.0,bass=2.0"',
+    )
+    p.add_argument(
+        "--sidechain-db",
+        type=float,
+        help="flat snare sidechain ducking in dB (e.g. -4.0)",
+    )
 
     p = sub.add_parser("conflicts", help="report tracks fighting for the same band")
     _add_render_args(p)
 
-    p = sub.add_parser("release", help="release-quality check (render preview if --output omitted)")
+    p = sub.add_parser(
+        "release", help="release-quality check (render preview if --output omitted)"
+    )
     p.add_argument("style", nargs="?")
     _add_render_args(p)
     p.add_argument("--output", help="check an existing WAV instead of rendering")
-    p.add_argument("--target-lufs", type=float, default=-8.0,
-                   help="target LUFS used when checking an existing file without --style")
+    p.add_argument(
+        "--target-lufs",
+        type=float,
+        default=-8.0,
+        help="target LUFS used when checking an existing file without --style",
+    )
 
     return parser
 
 
 def _add_render_args(p: argparse.ArgumentParser) -> None:
-    p.add_argument("render_dir", nargs="?", default=DEFAULT_RENDER_DIR,
-                   help=f"folder with one WAV per track (default: {DEFAULT_RENDER_DIR})")
+    p.add_argument(
+        "render_dir",
+        nargs="?",
+        default=DEFAULT_RENDER_DIR,
+        help=f"folder with one WAV per track (default: {DEFAULT_RENDER_DIR})",
+    )
     p.add_argument("--pattern", default="*.wav", help="glob for audio files")
 
 

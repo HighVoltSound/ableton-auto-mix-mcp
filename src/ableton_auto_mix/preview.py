@@ -9,18 +9,92 @@ to the style's target loudness.
 from __future__ import annotations
 
 import os
+from collections.abc import Callable
+from dataclasses import dataclass
 from typing import Any
+
+from .logging_utils import Timer, get_logger
+
+_log = get_logger("preview")
 
 import numpy as np
 import pyloudnorm as pyln
 import soundfile as sf
-from scipy.ndimage import convolve1d
 from scipy.signal import butter, lfilter, resample_poly, sosfiltfilt
+
 from .analyzer import analyze_directory
-from .mixer import compute_mix, match_role_with_spectrum
+from .dsp._utils import (
+    apply_side_gain as _apply_side_gain,
+)
+from .dsp._utils import (
+    apply_width as _apply_width,
+)
+from .dsp._utils import (
+    compressor as _compressor,
+)
+from .dsp._utils import (
+    moving_average as _moving_average,
+)
+from .dsp._utils import (
+    sliding_max as _sliding_max,
+)
+from .dsp._utils import (
+    true_peak_db as _true_peak_db,
+)
+from .mixer import BandCorrection, compute_mix
 from .profiles import StyleProfile
+from .reference import (
+    MAX_MATCH_GAIN_DB,
+    _high_shelf_biquad,
+    _low_shelf_biquad,
+    _peaking_biquad,
+    apply_biquad,
+    apply_match_eq,
+    compute_match_curve,
+    load_audio_stereo,
+)
 
 PAN_LAW_DB = -3.0  # equal-power-ish center attenuation
+
+# Safety clamp for the per-track spectral corrections (same as match EQ).
+MAX_TRACK_EQ_DB = MAX_MATCH_GAIN_DB
+
+
+def _apply_band_correction(
+    audio: np.ndarray, sr: int, bc: BandCorrection
+) -> tuple[np.ndarray, dict[str, Any]]:
+    """Sound one spectral correction from mixer.compute_mix on a stereo track.
+
+    Designs a biquad from the band's range_hz / delta_db: a peaking filter in
+    the middle of the band, or a shelf when the correction targets an edge of
+    the spectrum (>=16 kHz highshelf, <=40 Hz lowshelf). Gain is clamped to
+    +/-6 dB and Q to ~1.0 so the preview stays safe to listen to.
+
+    Returns (filtered_audio, applied_info_dict).
+    """
+    lo = float(bc.freq_range[0])
+    hi = float(bc.freq_range[1])
+    delta = float(np.clip(bc.delta_db, -MAX_TRACK_EQ_DB, MAX_TRACK_EQ_DB))
+    q = 1.0
+
+    if hi >= 16000.0:
+        f0 = max(lo, 1000.0)
+        b, a = _high_shelf_biquad(sr, f0, delta, q=q)
+    elif lo <= 40.0:
+        f0 = min(hi, sr * 0.4)
+        b, a = _low_shelf_biquad(sr, f0, delta, q=q)
+    else:
+        f0 = float(np.sqrt(max(lo, 10.0) * min(hi, sr * 0.45)))
+        b, a = _peaking_biquad(sr, f0, delta, q=q)
+
+    filtered = apply_biquad(audio, b, a)
+    info = {
+        "track": "",  # filled by the caller (file name)
+        "band": bc.band,
+        "range_hz": [float(x) for x in bc.freq_range],
+        "delta_db": round(delta, 2),
+    }
+    return filtered, info
 
 
 def _band_eq(
@@ -51,29 +125,32 @@ def _pan_gains(pan: float) -> tuple[float, float]:
     return float(np.cos(angle)), float(np.sin(angle))
 
 
-# Mid/side width multipliers: how much the side channel is scaled (linear).
-# mono=0 (fold to mid), moderate=1.2, wide=1.8, very_wide=2.5.
-_WIDTH_GAIN = {
-    "mono": 0.0,
-    "moderate": 1.2,
-    "wide": 1.8,
-    "very_wide": 2.5,
-}
+# _apply_width, _apply_side_gain — imported from dsp._utils
 
 
-def _apply_width(audio: np.ndarray, width: str) -> np.ndarray:
-    """Rescale stereo width via mid/side: widen or narrow the side channel.
+def _apply_eq_nodes(
+    audio: np.ndarray, sr: int, nodes: list[dict], max_db: float = MAX_TRACK_EQ_DB
+) -> np.ndarray:
+    """Apply planner-style EQ nodes [{hz, gain_db, q, type}] as biquads.
 
-    mid = (L+R)/2, side = (L-R)/2.  Scaling the side channel by g keeps the
-    center image intact while broadening (g>1) or narrowing (g<1) the image.
-    mono (g=0) folds the signal to the center, matching a "mono" bus role.
+    Reuses the RBJ designs from reference.py; type is "peaking" (default),
+    "low_shelf" or "high_shelf". Gains are clamped for safety.
     """
-    gain = _WIDTH_GAIN.get(width, 1.0)
-    if abs(gain - 1.0) < 1e-9 or audio.ndim < 2:
-        return audio
-    mid = (audio[:, 0] + audio[:, 1]) * 0.5
-    side = (audio[:, 0] - audio[:, 1]) * 0.5 * gain
-    return np.stack([mid + side, mid - side], axis=1)
+    for node in nodes:
+        delta = float(np.clip(node.get("gain_db", 0.0), -max_db, max_db))
+        if abs(delta) < 0.3:
+            continue
+        f0 = float(np.clip(node.get("hz", 1000.0), 20.0, sr * 0.45))
+        q = float(node.get("q", 1.0))
+        ntype = node.get("type", "peaking")
+        if ntype == "low_shelf":
+            b, a = _low_shelf_biquad(sr, f0, delta, q=q)
+        elif ntype == "high_shelf":
+            b, a = _high_shelf_biquad(sr, f0, delta, q=q)
+        else:
+            b, a = _peaking_biquad(sr, f0, delta, q=q)
+        audio = apply_biquad(audio, b, a)
+    return audio
 
 
 def _sidechain_gain(
@@ -89,7 +166,9 @@ def _sidechain_gain(
     (max-filter) and a smooth exponential release. Returns a per-sample gain
     array of the same length as the signal.
     """
-    mono = np.abs(sidechain_signal.mean(axis=1) if sidechain_signal.ndim > 1 else sidechain_signal)
+    mono = np.abs(
+        sidechain_signal.mean(axis=1) if sidechain_signal.ndim > 1 else sidechain_signal
+    )
     # amount_db is "duck by this many dB" (sign-agnostic: -4.0 or 4.0 both = -4 dB).
     floor = 10 ** (-abs(amount_db) / 20.0)
 
@@ -107,7 +186,9 @@ def _sidechain_gain(
     # The filter is primed with y[-1] = 1.0 via `zi` so it starts from unity
     # (no fade-in from zero).
     sm, _ = lfilter(
-        [alpha], [1.0, -(1.0 - alpha)], target,
+        [alpha],
+        [1.0, -(1.0 - alpha)],
+        target,
         zi=np.array([1.0 - alpha]),
     )
     gain = np.minimum(target, sm)
@@ -134,13 +215,7 @@ def _band_duck(
     return audio - band + ducked_band
 
 
-def _true_peak_db(audio: np.ndarray, sr: int) -> float:
-    """True peak (dBTP) via 4x oversampling of both channels."""
-    if audio.ndim == 1:
-        audio = np.stack([audio, audio], axis=1)
-    up = resample_poly(audio, 4, 1, axis=0)
-    peak = float(np.max(np.abs(up)))
-    return 20 * np.log10(peak + 1e-12)
+# _true_peak_db — imported from dsp._utils
 
 
 def _dither(audio: np.ndarray, bits: int = 16) -> np.ndarray:
@@ -245,7 +320,8 @@ def _apply_space(audio: np.ndarray, sr: int, cfg: dict) -> np.ndarray:
     if "delay" in cfg:
         delay_cfg = cfg["delay"]
         audio = _delay(
-            audio, sr,
+            audio,
+            sr,
             time_ms=float(delay_cfg.get("time_ms", 180.0)),
             feedback=float(delay_cfg.get("feedback", 0.3)),
             amount=float(delay_cfg.get("amount", 0.25)),
@@ -253,7 +329,8 @@ def _apply_space(audio: np.ndarray, sr: int, cfg: dict) -> np.ndarray:
     if "reverb" in cfg:
         rev_cfg = cfg["reverb"]
         audio = _reverb(
-            audio, sr,
+            audio,
+            sr,
             amount=float(rev_cfg.get("amount", 0.2)),
             decay=float(rev_cfg.get("decay", 0.4)),
             tone=float(rev_cfg.get("tone", 0.5)),
@@ -272,132 +349,71 @@ def _soft_clip(audio: np.ndarray, drive_db: float, amount: float = 1.0) -> np.nd
     return (1.0 - amount) * audio + amount * clipped
 
 
-def _compressor(
-    audio: np.ndarray,
-    sr: int,
-    threshold_db: float = -12.0,
-    ratio: float = 3.0,
-    attack_ms: float = 10.0,
-    release_ms: float = 120.0,
-    makeup_db: float = 0.0,
-) -> np.ndarray:
-    """Gentle feed-forward compressor with a smooth knee.
-
-    Envelope is a peak-tracked average; gain reduction is applied with a fast
-    attack (sliding max) and an exponential release so it glues without
-    pumping. Used for the profile's per-track and glue-bus compression.
-    """
-    threshold = 10 ** (threshold_db / 20.0)
-    ratio = max(float(ratio), 1.0)
-    attack = max(int(attack_ms / 1000.0 * sr), 1)
-    release = max(int(release_ms / 1000.0 * sr), 1)
-
-    # Peak-tracked envelope on the stereo pair (RMS-ish, one-pole smoothed).
-    env = np.sqrt(np.mean(audio ** 2, axis=1)) + 1e-12
-    env = _moving_average(env, attack)
-    env_hold = _sliding_max(env, attack)
-
-    # Over-threshold reduction in linear terms: below thresh no gain change.
-    over = np.maximum(env_hold / threshold, 1.0)
-    # Compressor curve: y = x^(1/ratio) above the threshold (soft knee via a
-    # small linear taper right at the threshold to avoid a hard kink).
-    knee = 2.0
-    taper = np.clip((env_hold / threshold - 1.0) / (knee / threshold) * (1.0 / ratio) + (1.0 - 1.0 / ratio), 0.0, 1.0)
-    gain = np.power(over, (1.0 / ratio - 1.0))
-    gain = 1.0 + (gain - 1.0) * np.maximum(taper, 0.0)
-
-    # Smooth release: one-pole on the gain envelope (start from unity).
-    alpha = 1.0 - np.exp(-1.0 / release)
-    sm, _ = lfilter(
-        [alpha], [1.0, -(1.0 - alpha)], gain,
-        zi=np.array([1.0]),
-    )
-    gain = np.minimum(gain, sm)  # attack follows drops instantly, release eases
-
-    gain2d = np.stack([gain, gain], axis=1)
-    makeup = 10 ** (makeup_db / 20.0)
-    return audio * gain2d * makeup
-
-
-def _moving_average(x: np.ndarray, window: int) -> np.ndarray:
-    """O(N) sliding-window average via cumulative sums (per channel)."""
-    w = max(int(window), 1)
-    n = x.shape[0]
-    if n <= w:
-        return np.full_like(x, np.mean(x, axis=0, keepdims=True))
-    cum = np.cumsum(x, axis=0)
-    out = np.empty_like(x, dtype=np.float64)
-    denom = np.minimum(np.arange(1, n + 1), w)
-    shape = (n,) + (1,) * (x.ndim - 1)
-    head = cum / denom.reshape(shape)
-    tail = cum[w:] - cum[:-w]
-    out[:w] = head[:w]
-    out[w:] = tail / w
-    return out
-
-
-def _sliding_max(x: np.ndarray, window: int) -> np.ndarray:
-    """O(N) sliding-window maximum over axis 0 (van Herk / Gil-Werman).
-
-    Equivalent to maximum_filter1d but linear in the number of samples even
-    for large windows, so it stays fast on long oversampled buffers.
-    """
-    w = max(int(window), 1)
-    n = x.shape[0]
-    if n <= w:
-        return np.maximum.accumulate(x, axis=0)
-    if w == 1:
-        return x.copy()
-    out = np.empty_like(x)
-    # Block-wise prefix (forward) and suffix (backward) maxima.
-    n_blocks = (n + w - 1) // w
-    pad = n_blocks * w - n
-    if pad:
-        xp = np.concatenate([x, np.zeros((pad,) + x.shape[1:], dtype=x.dtype)], axis=0)
-    else:
-        xp = x
-    blocks = xp.reshape(n_blocks, w, *x.shape[1:])
-    fwd = np.maximum.accumulate(blocks, axis=1)
-    rev = blocks[:, ::-1, ...]
-    bwd = np.maximum.accumulate(rev, axis=1)[:, ::-1, ...]
-    fwd = fwd.reshape(-1, *x.shape[1:])
-    bwd = bwd.reshape(-1, *x.shape[1:])
-    # For sample i the window is [i-w+1, i]: left part from bwd (block suffix
-    # of the block containing i-w+1), right part from fwd (block prefix up to i).
-    out = np.empty_like(x)
-    out[: w - 1] = fwd[: w - 1]  # window still growing from sample 0
-    if w <= n:
-        out[w - 1 :] = np.maximum(bwd[: n - w + 1], fwd[w - 1 : n])
-    return out
+# _compressor, _moving_average, _sliding_max — imported from dsp._utils
 
 
 def _limit_peaks(audio: np.ndarray, sr: int, ceiling_db: float = -1.0) -> np.ndarray:
-    """True-peak lookahead limiter.
+    """True-peak lookahead limiter with ITU-R BS.1770 / EBU R128 oversampled peak control."""
+    try:
+        from .dsp.limiter import LimiterConfig, apply_true_peak_limiter
 
-    Envelope detection runs on a 4x oversampled signal so intersample peaks are
-    caught too, then gain is applied to the original samples with a 20 ms
-    lookahead shift. Output never exceeds the ceiling at the sample level and
-    stays within ~0.3 dB of it on the true peak.
-    """
-    up = resample_poly(audio, 4, 1, axis=0)
-    up_sr = sr * 4
-    # Extra headroom so the downsampling back to sr doesn't push intersample
-    # peaks above the requested ceiling.
-    ceiling = 10 ** ((ceiling_db - 1.0) / 20.0)
-    lookahead = max(int(0.02 * up_sr), 1)  # 20 ms in oversampled domain
-    env = _sliding_max(np.abs(up), lookahead)
-    gain = np.minimum(ceiling / (env + 1e-12), 1.0)
-    pad = np.full((lookahead,) + gain.shape[1:], 1.0, dtype=gain.dtype)
-    gain = np.concatenate([pad, gain[:-lookahead]], axis=0)
-    release = max(int(0.05 * up_sr), 1)
-    gain = _moving_average(gain, release)
-    # Apply gain at oversampled resolution, then convert back.
-    out_up = up * gain
-    out = resample_poly(out_up, 1, 4, axis=0)
-    # Safety net at the true peak: clip the oversampled signal first.
-    out_up_clipped = np.minimum(out_up, ceiling)
-    out_up_clipped = np.maximum(out_up_clipped, -ceiling)
-    return resample_poly(out_up_clipped, 1, 4, axis=0)
+        return apply_true_peak_limiter(
+            audio, sr, LimiterConfig(ceiling_dbtp=ceiling_db)
+        )
+    except Exception:
+        up = resample_poly(audio, 4, 1, axis=0)
+        up_sr = sr * 4
+        ceiling = 10 ** ((ceiling_db - 0.5) / 20.0)
+        lookahead = max(int(0.01 * up_sr), 1)
+        env = _sliding_max(np.abs(up), lookahead)
+        gain = np.minimum(ceiling / (env + 1e-12), 1.0)
+        pad = np.full((lookahead,) + gain.shape[1:], 1.0, dtype=gain.dtype)
+        gain = np.concatenate([pad, gain[:-lookahead]], axis=0)
+        release = max(int(0.05 * up_sr), 1)
+        gain = _moving_average(gain, release)
+        out_up = up * gain
+        out_up_clipped = np.clip(out_up, -ceiling, ceiling)
+        return resample_poly(out_up_clipped, 1, 4, axis=0)
+
+
+def _apply_user_eq_bands(
+    audio: np.ndarray, sr: int, eq_bands: list[dict] | None
+) -> np.ndarray:
+    """Apply interactive user-configured EQ bands (peaking, shelves, cuts) to audio."""
+    if not eq_bands:
+        return audio
+    out = audio.copy()
+    for b in eq_bands:
+        if not b.get("enabled", True):
+            continue
+        b_type = b.get("type", "bell")
+        freq = float(b.get("freq", 1000.0))
+        gain = float(b.get("gain", 0.0))
+        q = float(b.get("q", 1.0))
+        if abs(gain) < 0.05 and b_type not in ("low_cut", "high_cut"):
+            continue
+        nyquist = sr * 0.5
+        if b_type == "bell":
+            b_coeff, a_coeff = _peaking_biquad(sr, freq, gain, q=q)
+            out = apply_biquad(out, b_coeff, a_coeff)
+        elif b_type == "low_shelf":
+            b_coeff, a_coeff = _low_shelf_biquad(sr, freq, gain, q=q)
+            out = apply_biquad(out, b_coeff, a_coeff)
+        elif b_type == "high_shelf":
+            b_coeff, a_coeff = _high_shelf_biquad(sr, freq, gain, q=q)
+            out = apply_biquad(out, b_coeff, a_coeff)
+        elif b_type == "low_cut":
+            sos = butter(2, max(20.0, freq) / nyquist, btype="highpass", output="sos")
+            out = sosfiltfilt(sos, out, axis=0)
+        elif b_type == "high_cut":
+            sos = butter(
+                2, min(sr * 0.45, freq) / nyquist, btype="lowpass", output="sos"
+            )
+            out = sosfiltfilt(sos, out, axis=0)
+        else:
+            b_coeff, a_coeff = _peaking_biquad(sr, freq, gain, q=q)
+            out = apply_biquad(out, b_coeff, a_coeff)
+    return out
 
 
 def _normalize_to_lufs(
@@ -428,14 +444,75 @@ def _normalize_to_lufs(
     return best
 
 
+@dataclass
+class PreviewOptions:
+    """All optional knobs for ``render_preview_mix``.
+
+    Grouped into a dataclass so callers (API, CLI, tests) don't need to
+    remember 20+ keyword arguments.  Every field has a safe default so
+    ``PreviewOptions()`` produces a valid no-op config.
+    """
+
+    # Output
+    output_path: str | None = None
+    max_duration: float | None = None
+
+    # Per-track gain / sidechain
+    manual_gain: dict[str, float] | None = None
+    sidechain_db: float | None = None
+    sidechain_config: dict | None = None
+
+    # Reference match-EQ
+    reference_path: str | None = None
+    reference_match_bands: list[dict] | None = None
+
+    # Debug / comparison
+    render_before: bool = False
+
+    # Planner integration
+    apply_plan: bool = False
+
+    # DSP chain configs
+    multiband_config: dict | None = None
+    limiter_ceiling_db: float | None = None
+    dynamic_eq_config: dict | None = None
+    midside_eq_config: dict | None = None
+    transient_config: dict | None = None
+    deesser_config: dict | None = None
+    eq_bands: list[dict] | None = None
+
+    # Per-track spatial / transient
+    spatial_configs: dict[str, dict] | None = None
+    transient_configs: dict[str, dict] | None = None
+
+    # Progress reporting
+    progress_callback: Callable[[str, int, str], None] | None = None
+
+
 def render_preview_mix(
     render_dir: str,
     profile: StyleProfile,
     pattern: str = "*.wav",
+    options: PreviewOptions | None = None,
     output_path: str | None = None,
     max_duration: float | None = None,
     manual_gain: dict[str, float] | None = None,
     sidechain_db: float | None = None,
+    reference_path: str | None = None,
+    render_before: bool = False,
+    apply_plan: bool = False,
+    multiband_config: dict | None = None,
+    limiter_ceiling_db: float | None = None,
+    dynamic_eq_config: dict | None = None,
+    midside_eq_config: dict | None = None,
+    transient_config: dict | None = None,
+    sidechain_config: dict | None = None,
+    deesser_config: dict | None = None,
+    eq_bands: list[dict] | None = None,
+    spatial_configs: dict[str, dict] | None = None,
+    transient_configs: dict[str, dict] | None = None,
+    reference_match_bands: list[dict] | None = None,
+    progress_callback: Callable[[str, int, str], None] | None = None,
 ) -> dict[str, Any]:
     """Apply corrections to the rendered tracks and bounce a preview WAV.
 
@@ -450,28 +527,133 @@ def render_preview_mix(
         sidechain_db: duck all non-snare tracks by this many dB whenever a
             snare hits (light sidechain pump). Pass a negative value like -4.0.
             None disables it.
+        reference_path: optional WAV of a reference track. When given, a
+            match-EQ curve (mix spectrum vs reference spectrum, shape only)
+            is computed from the summed parts and applied before mastering.
+            The result dict then contains "match_eq" with the curve points.
+        render_before: when True, additionally bounce a "before" version —
+            same common trim, plain unity-gain sum of the loaded tracks (no
+            EQ / sidechain / mastering), peak-normalized to -1 dBTP with the
+            same true-peak limiter — written next to the main output as
+            ``<stem>_before.wav`` and reported via "before_path".
+        apply_plan: when True, build a planner.Plan and drive the render from
+            it: mix_actions replace the default per-track gain/pan/width/EQ
+            hints, master_actions are applied to the summed mix BEFORE the
+            fixed mastering chain (sidechain / bus comp / soft clip stay).
+            If the plan carries a loudness move, it replaces the iterative
+            loudness normalize (single gain + limiter, no double handling).
+            The result dict then contains "plan" with both action columns.
+            The "before" bounce (if requested) stays fully raw regardless.
+
+    Returns:
+        Dict with the usual preview metadata plus:
+          - "eq_applied": list of {track, band, range_hz, delta_db} entries
+            for every spectral correction that was actually sounded,
+          - "match_eq": {"reference_path", "curve"} when reference_path given,
+          - "before_path": path of the before-bounce when render_before is set,
+          - "plan": {"mix_actions", "master_actions", "summary"} when
+            apply_plan is set.
     """
+    # Merge PreviewOptions into individual kwargs (options wins if set).
+    if options is not None:
+        output_path = options.output_path or output_path
+        max_duration = (
+            options.max_duration if options.max_duration is not None else max_duration
+        )
+        manual_gain = options.manual_gain or manual_gain
+        sidechain_db = (
+            options.sidechain_db if options.sidechain_db is not None else sidechain_db
+        )
+        sidechain_config = options.sidechain_config or sidechain_config
+        reference_path = options.reference_path or reference_path
+        reference_match_bands = options.reference_match_bands or reference_match_bands
+        render_before = options.render_before or render_before
+        apply_plan = options.apply_plan or apply_plan
+        multiband_config = options.multiband_config or multiband_config
+        limiter_ceiling_db = (
+            options.limiter_ceiling_db
+            if options.limiter_ceiling_db is not None
+            else limiter_ceiling_db
+        )
+        dynamic_eq_config = options.dynamic_eq_config or dynamic_eq_config
+        midside_eq_config = options.midside_eq_config or midside_eq_config
+        transient_config = options.transient_config or transient_config
+        deesser_config = options.deesser_config or deesser_config
+        eq_bands = options.eq_bands or eq_bands
+        spatial_configs = options.spatial_configs or spatial_configs
+        transient_configs = options.transient_configs or transient_configs
+        progress_callback = options.progress_callback or progress_callback
+
     # Per-profile manual gain (from the style) overridden by the caller's.
     effective_manual_gain = dict(profile.manual_gain or {})
     if manual_gain:
         effective_manual_gain.update(manual_gain)
 
-    analyses = analyze_directory(render_dir, pattern)
+    if output_path is None:
+        output_path = os.path.join(render_dir, f"preview_{profile.name}.wav")
+    os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
+
+    _log.info(
+        "Starting preview render: style=%s, dir=%s, output=%s",
+        profile.name,
+        render_dir,
+        output_path,
+    )
+
+    if progress_callback:
+        progress_callback("analyzing", 5, "Analyzing tracks…")
+
+    with Timer("analyze_directory", _log):
+        analyses = analyze_directory(render_dir, pattern)
     if not analyses:
         raise ValueError(f"No {pattern} files found in {render_dir}")
 
-    mix = compute_mix(analyses, profile, [a.name for a in analyses])
+    _log.info("Found %d tracks, computing mix…", len(analyses))
+
+    if progress_callback:
+        progress_callback("mixing", 10, f"Computing mix for {len(analyses)} tracks…")
+
+    with Timer("compute_mix", _log):
+        mix = compute_mix(
+            analyses, profile, [a.name for a in analyses], use_planner=apply_plan
+        )
+
+    # Planner: classify actions into mixing (per-track) vs mastering (bus).
+    plan: Any | None = None
+    plan_by_track: dict[str, dict[str, list[dict]]] = {}
+    if apply_plan:
+        from .planner import build_plan
+
+        plan = build_plan(analyses, profile, mix)
+        for act in plan.mix_actions:
+            bucket = plan_by_track.setdefault(act["track"], {})
+            bucket.setdefault(act["kind"], []).append(act)
 
     # Track indices in the analyses list == indices in the mix corrections.
     stereo_parts: list[np.ndarray] = []
+    raw_parts: list[np.ndarray] = []  # untouched loads, for the "before" bounce
+    eq_applied: list[dict[str, Any]] = []
     used_sr = None
-    for analysis, corr in zip(analyses, mix.track_corrections):
+    total_tracks = len(analyses)
+    _log.info("Processing %d tracks…", total_tracks)
+    for track_idx, (analysis, corr) in enumerate(
+        zip(analyses, mix.track_corrections, strict=False)
+    ):
+        if progress_callback:
+            pct = 15 + int(25 * track_idx / max(total_tracks, 1))
+            progress_callback(
+                "applying_eq",
+                pct,
+                f"Track {track_idx + 1}/{total_tracks}: {analysis.name}",
+            )
+
         audio, sr = sf.read(analysis.path, always_2d=False)
         if audio.ndim == 1:
             audio = np.stack([audio, audio], axis=1)
         elif audio.shape[1] > 2:
             audio = audio[:, :2]
         used_sr = sr
+        raw_parts.append(np.asarray(audio, dtype=np.float64).copy())
 
         role_eq = (profile.role_eq or {}).get(corr.role)
         if role_eq:
@@ -487,6 +669,44 @@ def render_preview_mix(
         if mud:
             audio = _band_eq(audio, sr, [mud])
 
+        # Sound the engine's spectral corrections as real biquad EQ. With a
+        # plan, drive from plan mix_actions instead (master-promoted bands
+        # were already stripped from corr.band_corrections by use_planner).
+        track_acts = plan_by_track.get(analysis.name, {}) if plan is not None else {}
+        if plan is not None:
+            for act in track_acts.get("eq", []):
+                params = act["params"]
+                for node in params.get("nodes", []):
+                    audio = _apply_eq_nodes(audio, sr, [node])
+                    eq_applied.append(
+                        {
+                            "track": analysis.name,
+                            "band": params.get("band", ""),
+                            "range_hz": [
+                                float(x)
+                                for x in params.get(
+                                    "freq_range",
+                                    [node.get("hz", 0.0), node.get("hz", 0.0)],
+                                )
+                            ],
+                            "delta_db": round(
+                                float(
+                                    np.clip(
+                                        node.get("gain_db", 0.0),
+                                        -MAX_TRACK_EQ_DB,
+                                        MAX_TRACK_EQ_DB,
+                                    )
+                                ),
+                                2,
+                            ),
+                        }
+                    )
+        else:
+            for bc in corr.band_corrections:
+                audio, eq_info = _apply_band_correction(audio, sr, bc)
+                eq_info["track"] = analysis.name
+                eq_applied.append(eq_info)
+
         # Space FX (reverb / delay) per role.
         space_cfg = (profile.space or {}).get(corr.role)
         if space_cfg:
@@ -496,7 +716,8 @@ def render_preview_mix(
         track_comp = (profile.compression or {}).get(corr.role)
         if track_comp:
             audio = _compressor(
-                audio, sr,
+                audio,
+                sr,
                 threshold_db=float(track_comp.get("threshold_db", -12.0)),
                 ratio=float(track_comp.get("ratio", 3.0)),
                 attack_ms=float(track_comp.get("attack_ms", 10.0)),
@@ -504,29 +725,99 @@ def render_preview_mix(
                 makeup_db=float(track_comp.get("makeup_db", 0.0)),
             )
 
-        gain = 10 ** ((corr.volume_db or 0.0) / 20.0)
+        # DSP processing: dynamic EQ, mid/side EQ, transient shaper.
+        if dynamic_eq_config:
+            from .dsp.dynamic_eq import apply_dynamic_eq
+            from .dsp.dynamic_eq import config_from_dict as deq_cfg
+
+            audio = apply_dynamic_eq(audio, sr, deq_cfg(dynamic_eq_config))
+        if midside_eq_config:
+            from .dsp.midside_eq import apply_midside_eq
+            from .dsp.midside_eq import config_from_dict as ms_cfg
+
+            audio = apply_midside_eq(audio, sr, ms_cfg(midside_eq_config))
+        if transient_config:
+            from .dsp.transient import apply_transient_shaper
+            from .dsp.transient import config_from_dict as ts_cfg
+
+            audio = apply_transient_shaper(audio, sr, ts_cfg(transient_config))
+        if deesser_config:
+            from .dsp.deesser import apply_deesser
+            from .dsp.deesser import config_from_dict as deess_cfg
+
+            audio = apply_deesser(audio, sr, deess_cfg(deesser_config))
+        # Per-track Binaural 3D Head Spatializer:
+        sp_cfg_dict = None
+        if spatial_configs:
+            sp_cfg_dict = spatial_configs.get(analysis.name) or spatial_configs.get(
+                os.path.splitext(os.path.basename(analysis.path))[0]
+            )
+        if sp_cfg_dict is None and corr.spatial_config:
+            sp_cfg_dict = corr.spatial_config
+
+        if sp_cfg_dict and sp_cfg_dict.get("enabled", True):
+            from .dsp.spatializer import apply_binaural_spatializer
+            from .dsp.spatializer import config_from_dict as sp_cfg
+
+            audio = apply_binaural_spatializer(audio, sr, sp_cfg(sp_cfg_dict))
+        if transient_configs:
+            tr_cfg_dict = transient_configs.get(analysis.name) or transient_configs.get(
+                os.path.splitext(os.path.basename(analysis.path))[0]
+            )
+            if tr_cfg_dict:
+                from .dsp.transient import apply_transient_shaper
+                from .dsp.transient import config_from_dict as ts_cfg_dict
+
+                audio = apply_transient_shaper(audio, sr, ts_cfg_dict(tr_cfg_dict))
+
+        # Gain / pan: with a plan, take them from the plan's mix_actions
+        # (they mirror the corrections; plan wins to avoid divergence).
+        if plan is not None:
+            gain_acts = track_acts.get("gain") or []
+            volume_db = (
+                gain_acts[0]["params"]["gain_db"]
+                if gain_acts
+                else (corr.volume_db or 0.0)
+            )
+            pan_acts = track_acts.get("pan") or []
+            pan_value = pan_acts[0]["params"]["pan"] if pan_acts else corr.pan
+        else:
+            volume_db = corr.volume_db or 0.0
+            pan_value = corr.pan
+
+        gain = 10 ** (volume_db / 20.0)
         gain *= 10 ** (effective_manual_gain.get(analysis.name, 0.0) / 20.0)
-        if corr.pan is not None:
-            lg, rg = _pan_gains(corr.pan)
+        if pan_value is not None:
+            lg, rg = _pan_gains(pan_value)
             left, right = audio[:, 0] * lg, audio[:, 1] * rg
         else:
             left, right = audio[:, 0], audio[:, 1]
-        # Stereo width per role (mono/wide/very_wide) via mid/side.
+        # Stereo width per role (mono/wide/very_wide) via mid/side. With a
+        # plan the width action (if any) replaces the profile default.
         part = np.stack([left, right], axis=1)
         role_cfg = profile.track_balance.get(corr.role) or {}
-        part = _apply_width(part, role_cfg.get("width", "moderate"))
+        width_str = role_cfg.get("width", "moderate")
+        if plan is not None:
+            width_acts = track_acts.get("width") or []
+            if width_acts:
+                width_str = width_acts[0]["params"]["width"]
+        part = _apply_width(part, width_str)
         stereo_parts.append(part * gain)
 
     # Align every part to a common length so nothing plays on its own after the
     # rest has ended. Prefer the shortest render, or cap at max_duration.
+    shortest = min(p.shape[0] for p in stereo_parts)
     if max_duration is not None:
-        common = int(max_duration * used_sr)
+        common = min(shortest, int(max_duration * used_sr))
     else:
-        common = min(p.shape[0] for p in stereo_parts)
+        common = shortest
     stereo_parts = [p[:common] for p in stereo_parts]
 
     # Sidechain from the profile: kick ducks the low end, snare ducks the
     # 100-300 Hz band of bass/sub (dynamic EQ) so bass and snare stop fighting.
+    if progress_callback:
+        progress_callback("sidechain", 55, "Applying sidechain ducking…")
+
     profile_sidechain = profile.sidechain or {}
     duck_kick = profile_sidechain.get("kick")
     duck_snare_band = profile_sidechain.get("snare_band")
@@ -578,30 +869,122 @@ def render_preview_mix(
         # bass/sub when the snare hits, leaving the rest of their spectrum.
         if snare_band_duck is not None:
             targets = set(duck_snare_band.get("targets", ["bass", "sub_bass"]))
-            band_range = [float(x) for x in duck_snare_band.get("band_range", [100, 300])]
+            band_range = [
+                float(x) for x in duck_snare_band.get("band_range", [100, 300])
+            ]
             for i, corr in enumerate(mix.track_corrections):
                 if corr.role in targets and i not in snare_idxs:
                     stereo_parts[i] = _band_duck(
                         stereo_parts[i], used_sr, band_range, snare_band_duck
                     )
 
+    # User-configurable sidechain: applied on top of the profile sidechain.
+    if sidechain_config and sidechain_config.get("enabled") and used_sr:
+        from .dsp.sidechain import apply_sidechain
+        from .dsp.sidechain import config_from_dict as sc_cfg
+
+        sc = sc_cfg(sidechain_config)
+        trigger_role = sc.trigger
+        trigger_idxs = [
+            i for i, c in enumerate(mix.track_corrections) if c.role == trigger_role
+        ]
+        if trigger_idxs:
+            trigger_audio = sum(stereo_parts[i] for i in trigger_idxs)
+            target_idxs = [
+                i
+                for i, c in enumerate(mix.track_corrections)
+                if c.role in sc.targets and i not in trigger_idxs
+            ]
+            for i in target_idxs:
+                stereo_parts[i] = apply_sidechain(
+                    stereo_parts[i], used_sr, trigger_audio, sc
+                )
+
     # Sum, then master: soft clip (if enabled) -> loudness normalize (TP-safe).
+    if progress_callback:
+        progress_callback("mastering", 70, "Mastering: bus compression + limiting…")
+
     mixdown = np.zeros((common, 2), dtype=np.float64)
     for part in stereo_parts:
         mixdown += part
+
+    # Plan mastering moves on the bus: applied BEFORE the fixed chain
+    # (sidechain already ran per-part; bus comp / soft clip / limiter come
+    # after). Loudness is deferred: it must land after the comp/clip stages.
+    plan_loudness: dict[str, Any] | None = None
+    if plan is not None:
+        for act in plan.master_actions:
+            if act["kind"] == "eq":
+                mixdown = _apply_eq_nodes(
+                    mixdown, used_sr, act["params"].get("nodes", [])
+                )
+            elif act["kind"] == "width":
+                mixdown = _apply_side_gain(
+                    mixdown, float(act["params"].get("side_gain", 1.0))
+                )
+            elif act["kind"] in ("loudness", "gain"):
+                plan_loudness = act
+
+    # Match EQ toward the reference: computed from the summed parts BEFORE
+    # any mastering so the curve describes the raw balance of the mix.
+    match_eq_info: dict[str, Any] | None = None
+    if reference_path:
+        ref_audio, ref_sr = load_audio_stereo(reference_path)
+        curve = compute_match_curve(used_sr, mixdown, ref_sr, ref_audio)
+        mixdown = apply_match_eq(mixdown, used_sr, curve)
+        match_eq_info = {
+            "reference_path": os.path.abspath(reference_path),
+            "curve": curve,
+        }
+
+    # "Before" bounce: plain unity-gain sum of the loaded tracks on the same
+    # common trim — no EQ / sidechain / mastering. Peak-normalized to -1 dBTP
+    # with the same true-peak limiter so it never clips.
+    before_path: str | None = None
+    if render_before:
+        base, ext = os.path.splitext(output_path)
+        before_path = f"{base}_before{ext or '.wav'}"
+        raw_sum = np.zeros((common, 2), dtype=np.float64)
+        for rp in raw_parts:
+            raw_sum += rp[:common]
+        peak_lin = float(np.max(np.abs(raw_sum))) + 1e-12
+        scaled = raw_sum * (10 ** (-1.0 / 20.0)) / peak_lin
+        sf.write(
+            before_path,
+            _dither(_limit_peaks(scaled, used_sr, ceiling_db=-1.0)),
+            used_sr,
+            subtype="PCM_16",
+        )
 
     mcfg = profile.master or {}
     # Glue compression on the summed mix (from the profile's "bus" block).
     bus_comp = (profile.compression or {}).get("bus")
     if bus_comp:
         mixdown = _compressor(
-            mixdown, used_sr,
+            mixdown,
+            used_sr,
             threshold_db=float(bus_comp.get("threshold_db", -14.0)),
             ratio=float(bus_comp.get("ratio", 2.0)),
             attack_ms=float(bus_comp.get("attack_ms", 12.0)),
             release_ms=float(bus_comp.get("release_ms", 130.0)),
             makeup_db=float(bus_comp.get("makeup_db", 0.0)),
         )
+
+    # Multiband compression (user-configurable, goes after bus comp).
+    if multiband_config:
+        from .multiband import apply_multiband, config_from_dict
+
+        mb_cfg = config_from_dict(multiband_config)
+        mixdown = apply_multiband(mixdown, used_sr, mb_cfg)
+
+    # AI Reference Match EQ bands
+    if reference_match_bands:
+        mixdown = _apply_user_eq_bands(mixdown, used_sr, reference_match_bands)
+
+    # User-defined interactive Master EQ bands (from UI / MCP)
+    if eq_bands:
+        mixdown = _apply_user_eq_bands(mixdown, used_sr, eq_bands)
+
     if mcfg.get("soft_clip"):
         mixdown = _soft_clip(
             mixdown,
@@ -609,21 +992,32 @@ def render_preview_mix(
             amount=float(mcfg.get("soft_clip_amount", 0.7)),
         )
 
-    mixdown = _normalize_to_lufs(
-        mixdown,
-        used_sr,
-        profile.target_lufs,
-        ceiling_dbtp=float(mcfg.get("ceiling_dbtp", -1.0)),
+    ceiling_dbtp = (
+        float(limiter_ceiling_db)
+        if limiter_ceiling_db is not None
+        else float(mcfg.get("ceiling_dbtp", -1.0))
     )
+    if plan is not None and plan_loudness is not None:
+        # Plan-driven loudness: one deliberate gain move + true-peak limiter.
+        # No iterative normalize, so the plan's gain isn't second-guessed.
+        mixdown = mixdown * 10 ** (float(plan_loudness["params"]["gain_db"]) / 20.0)
+        mixdown = _limit_peaks(mixdown, used_sr, ceiling_db=ceiling_dbtp)
+    else:
+        mixdown = _normalize_to_lufs(
+            mixdown,
+            used_sr,
+            profile.target_lufs,
+            ceiling_dbtp=ceiling_dbtp,
+        )
     peak = float(np.max(np.abs(mixdown)))
     true_peak_db = _true_peak_db(mixdown, used_sr)
 
-    if output_path is None:
-        output_path = os.path.join(render_dir, f"preview_{profile.name}.wav")
-    os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
+    if progress_callback:
+        progress_callback("rendering", 95, "Writing output WAV…")
+
     sf.write(output_path, _dither(mixdown), used_sr, subtype="PCM_16")
 
-    return {
+    result: dict[str, Any] = {
         "style": profile.name,
         "output_path": output_path,
         "sample_rate": used_sr,
@@ -632,12 +1026,20 @@ def render_preview_mix(
         "target_lufs": profile.target_lufs,
         "peak_db": round(20 * np.log10(peak + 1e-12), 1),
         "true_peak_dbtp": round(true_peak_db, 1),
+        "eq_applied": eq_applied,
+        "match_eq": match_eq_info,
         "sidechain": {
-            "kick": {"targets": list(duck_kick.get("targets", []))} if duck_kick else None,
+            "kick": {"targets": list(duck_kick.get("targets", []))}
+            if duck_kick
+            else None,
             "snare_band": {
                 "targets": list(duck_snare_band.get("targets", [])),
-                "band_range": [float(x) for x in duck_snare_band.get("band_range", [100, 300])],
-            } if duck_snare_band else None,
+                "band_range": [
+                    float(x) for x in duck_snare_band.get("band_range", [100, 300])
+                ],
+            }
+            if duck_snare_band
+            else None,
         },
         "tracks_used": [
             {
@@ -647,7 +1049,35 @@ def render_preview_mix(
                 "manual_gain_db": effective_manual_gain.get(a.name, 0.0),
                 "pan": c.pan,
             }
-            for a, c in zip(analyses, mix.track_corrections)
+            for a, c in zip(analyses, mix.track_corrections, strict=False)
         ],
         "master_notes": mix.master_notes,
     }
+    if before_path is not None:
+        result["before_path"] = before_path
+    if plan is not None:
+        result["plan"] = plan.to_dict()
+
+    if progress_callback:
+        progress_callback("done", 100, "")
+
+    _log.info(
+        "Preview complete: %s, duration=%.1fs, LUFS≈%.1f, peak=%.1f dB, true_peak=%.1f dBTP",
+        profile.name,
+        common / used_sr,
+        profile.target_lufs,
+        20 * np.log10(peak + 1e-12),
+        true_peak_db,
+    )
+
+    # Auto-save to RAG reference store for future recommendations
+    try:
+        from .reference_store import save_mix_to_references
+
+        save_mix_to_references(
+            analyses, mix, genre=profile.name, source=f"preview_{profile.name}"
+        )
+    except Exception as exc:
+        _log.warning("Failed to save mix to reference store: %s", exc)
+
+    return result

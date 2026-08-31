@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useImperativeHandle, useRef, useState, forwardRef } from 'react'
 import { Pause, Play } from 'lucide-react'
 import { audioUrl } from '@/lib/api'
+import { useLanguage } from '@/i18n'
 
 const SYNC_TOLERANCE_S = 0.08
 
@@ -26,6 +27,7 @@ export const ABPlayer = forwardRef<ABPlayerHandle, {
   beforePath: string
   afterPath: string
 }>(({ beforePath, afterPath }, ref) => {
+  const { t } = useLanguage()
   const beforeRef = useRef<HTMLAudioElement>(null)
   const afterRef = useRef<HTMLAudioElement>(null)
   const [active, setActive] = useState<Side>('after')
@@ -122,7 +124,7 @@ export const ABPlayer = forwardRef<ABPlayerHandle, {
         <button
           type="button"
           onClick={togglePlay}
-          aria-label={playing ? 'Pause' : 'Play'}
+          aria-label={playing ? t('player.pause') : t('player.play')}
           className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white shadow-[0_4px_20px_rgb(139_92_246/0.4)] transition-all hover:brightness-110 active:brightness-95"
         >
           {playing ? <Pause size={18} /> : <Play size={18} className="ml-0.5" />}
@@ -143,7 +145,7 @@ export const ABPlayer = forwardRef<ABPlayerHandle, {
                   : 'text-white/35 hover:text-white/70'
               }`}
             >
-              {side === 'before' ? 'Before' : 'After'}
+              {side === 'before' ? t('player.before') : t('player.after')}
             </button>
           ))}
         </div>

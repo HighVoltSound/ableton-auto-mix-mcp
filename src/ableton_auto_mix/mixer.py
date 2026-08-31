@@ -40,6 +40,174 @@ INSTRUMENT_KEYWORDS: dict[str, tuple[str, ...]] = {
     "fx": ("fx", "sfx", "impact", "sweep"),
 }
 
+ROLE_3D_SPATIAL_DEFAULTS: dict[str, dict[str, Any]] = {
+    "kick": {
+        "head_position": 0.0,
+        "azimuth_deg": 0.0,
+        "elevation_deg": -15.0,
+        "distance_m": 0.5,
+        "bass_mono": True,
+        "room_model": "none",
+        "room_amount": 0.0,
+        "preset_name": "Kick / 808 Sub (Центр-Низ)",
+        "enabled": True,
+    },
+    "sub_bass": {
+        "head_position": 0.0,
+        "azimuth_deg": 0.0,
+        "elevation_deg": -15.0,
+        "distance_m": 0.5,
+        "bass_mono": True,
+        "room_model": "none",
+        "room_amount": 0.0,
+        "preset_name": "Sub Bass (Моно-Центр)",
+        "enabled": True,
+    },
+    "bass": {
+        "head_position": 0.25,
+        "azimuth_deg": -10.0,
+        "elevation_deg": -10.0,
+        "distance_m": 0.7,
+        "bass_mono": True,
+        "room_model": "none",
+        "room_amount": 0.0,
+        "preset_name": "Bass (Затылок/Саб)",
+        "enabled": True,
+    },
+    "wobble": {
+        "head_position": 0.35,
+        "azimuth_deg": 15.0,
+        "elevation_deg": -5.0,
+        "distance_m": 0.8,
+        "bass_mono": True,
+        "room_model": "studio",
+        "room_amount": 0.15,
+        "preset_name": "Wobble / Growl (Затылок/Ухо)",
+        "enabled": True,
+    },
+    "snare": {
+        "head_position": 0.75,
+        "azimuth_deg": 0.0,
+        "elevation_deg": 5.0,
+        "distance_m": 0.8,
+        "bass_mono": False,
+        "room_model": "studio",
+        "room_amount": 0.20,
+        "preset_name": "Snare / Clap (Перед Лицом)",
+        "enabled": True,
+    },
+    "hihat": {
+        "head_position": 1.0,
+        "azimuth_deg": 40.0,
+        "elevation_deg": 45.0,
+        "distance_m": 1.2,
+        "bass_mono": False,
+        "room_model": "vocal_booth",
+        "room_amount": 0.15,
+        "preset_name": "Hi-Hats (Над головой +45°)",
+        "enabled": True,
+    },
+    "percussion": {
+        "head_position": 0.85,
+        "azimuth_deg": -35.0,
+        "elevation_deg": 30.0,
+        "distance_m": 1.1,
+        "bass_mono": False,
+        "room_model": "studio",
+        "room_amount": 0.25,
+        "preset_name": "Percussion (Сверху слева)",
+        "enabled": True,
+    },
+    "vocals": {
+        "head_position": 0.75,
+        "azimuth_deg": 0.0,
+        "elevation_deg": 10.0,
+        "distance_m": 0.6,
+        "bass_mono": False,
+        "room_model": "studio",
+        "room_amount": 0.25,
+        "preset_name": "Lead Vocal (Лицо In-Your-Face)",
+        "enabled": True,
+    },
+    "lead": {
+        "head_position": 0.75,
+        "azimuth_deg": 15.0,
+        "elevation_deg": 15.0,
+        "distance_m": 0.8,
+        "bass_mono": False,
+        "room_model": "studio",
+        "room_amount": 0.25,
+        "preset_name": "Lead Synth (Перед лицом сверху)",
+        "enabled": True,
+    },
+    "melody": {
+        "head_position": 0.65,
+        "azimuth_deg": -25.0,
+        "elevation_deg": 20.0,
+        "distance_m": 1.0,
+        "bass_mono": False,
+        "room_model": "studio",
+        "room_amount": 0.30,
+        "preset_name": "Melody / Keys (Слева на уровне глаз)",
+        "enabled": True,
+    },
+    "pads": {
+        "head_position": 1.0,
+        "azimuth_deg": -60.0,
+        "elevation_deg": 65.0,
+        "distance_m": 2.5,
+        "bass_mono": False,
+        "room_model": "cathedral",
+        "room_amount": 0.50,
+        "preset_name": "Pads / Atmosphere (Небесный купол +65°)",
+        "enabled": True,
+    },
+    "drone": {
+        "head_position": 0.25,
+        "azimuth_deg": -45.0,
+        "elevation_deg": 10.0,
+        "distance_m": 2.0,
+        "bass_mono": False,
+        "room_model": "cathedral",
+        "room_amount": 0.40,
+        "preset_name": "Drone (Глубокий затылок)",
+        "enabled": True,
+    },
+    "fx": {
+        "head_position": 1.0,
+        "azimuth_deg": 75.0,
+        "elevation_deg": 75.0,
+        "distance_m": 2.0,
+        "bass_mono": False,
+        "room_model": "club",
+        "room_amount": 0.45,
+        "preset_name": "FX / Risers (Зенит над головой +75°)",
+        "enabled": True,
+    },
+    "texture": {
+        "head_position": 1.0,
+        "azimuth_deg": 50.0,
+        "elevation_deg": 55.0,
+        "distance_m": 1.8,
+        "bass_mono": False,
+        "room_model": "studio",
+        "room_amount": 0.35,
+        "preset_name": "Texture (Купол сверху)",
+        "enabled": True,
+    },
+    "breaks": {
+        "head_position": 0.65,
+        "azimuth_deg": 0.0,
+        "elevation_deg": 10.0,
+        "distance_m": 0.9,
+        "bass_mono": False,
+        "room_model": "studio",
+        "room_amount": 0.20,
+        "preset_name": "Breaks (Фронт / Уши)",
+        "enabled": True,
+    },
+}
+
 
 @dataclass
 class TrackMatch:
@@ -122,7 +290,9 @@ def match_role_with_spectrum(name: str, band_energy: dict[str, float]) -> str:
     return _spectral_role(band_energy)
 
 
-def _profile_role(profile: StyleProfile, name: str, band_energy: dict[str, float]) -> str:
+def _profile_role(
+    profile: StyleProfile, name: str, band_energy: dict[str, float]
+) -> str:
     """Role for a track: explicit per-file override in the profile wins."""
     override = (profile.role_override or {}).get(name)
     if override:
@@ -148,6 +318,7 @@ class TrackCorrection:
     pan: float | None = None
     band_corrections: list[BandCorrection] = field(default_factory=list)
     notes: list[str] = field(default_factory=list)
+    spatial_config: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -167,6 +338,7 @@ class TrackCorrection:
                 for b in self.band_corrections
             ],
             "notes": self.notes,
+            "spatial_config": self.spatial_config,
         }
 
 
@@ -210,7 +382,8 @@ def suggest_style(analyses: list[TrackAnalysis]) -> dict[str, Any]:
     for p in list_profiles():
         lufs_score = abs(p.target_lufs - measured_lufs) / 4.0
         target_bands = {
-            b["band"]: b["target_db"] for b in p.frequency_balance
+            b["band"]: b["target_db"]
+            for b in p.frequency_balance
             if b["band"] in measured_bands
         }
         if len(target_bands) == len(measured_bands):
@@ -243,8 +416,16 @@ def compute_mix(
     analyses: list[TrackAnalysis],
     profile: StyleProfile,
     track_names: list[str] | None = None,
+    use_planner: bool = False,
 ) -> MixResult:
-    """Compute corrective actions to push the analyzed tracks toward the style."""
+    """Compute corrective actions to push the analyzed tracks toward the style.
+
+    With ``use_planner=True`` the spectral deltas that the planner classifies
+    as GLOBAL tonal-balance problems are removed from the per-track
+    corrections (they become bus/master EQ instead), so a downstream plan or
+    renderer never applies them twice. Default (False) keeps the legacy
+    behaviour untouched.
+    """
     if not analyses:
         raise ValueError("No track analyses provided")
 
@@ -267,9 +448,7 @@ def compute_mix(
     # reference of the mix; if none is present, fall back to the loudest track.
     # LUFS is used (not RMS) because sparse tracks like growls have a low RMS
     # but still hit hard when they play — RMS would over-boost them.
-    kick_idx = next(
-        (i for i, n in enumerate(names) if match_role(n) == "kick"), None
-    )
+    kick_idx = next((i for i, n in enumerate(names) if match_role(n) == "kick"), None)
     if kick_idx is not None:
         anchor_idx = kick_idx
         anchor_note = f"anchored on kick ({names[kick_idx]})"
@@ -282,20 +461,44 @@ def compute_mix(
         ]
         anchor_idx = int(np.argmax(sub_scores))
         anchor_note = "no kick by name; anchored on most low-end track"
-    anchor_role = _profile_role(profile, names[anchor_idx], analyses[anchor_idx].bandwidth_db)
+    anchor_role = _profile_role(
+        profile, names[anchor_idx], analyses[anchor_idx].bandwidth_db
+    )
     anchor_target = profile.track_balance.get(anchor_role, {}).get("level", 0.0)
 
-    for i, (analysis, name) in enumerate(zip(analyses, names)):
+    for i, (analysis, name) in enumerate(zip(analyses, names, strict=False)):
         role = _profile_role(profile, name, analysis.bandwidth_db)
         role_cfg = profile.track_balance.get(role)
 
         corr = TrackCorrection(index=i, name=name, role=role)
 
+        # 3D Head & Sky Dome spatial positioning per instrument role
+        default_spatial = ROLE_3D_SPATIAL_DEFAULTS.get(
+            role,
+            {
+                "head_position": 0.50,
+                "azimuth_deg": 0.0,
+                "elevation_deg": 10.0,
+                "distance_m": 1.0,
+                "bass_mono": role in ("kick", "sub_bass", "bass", "wobble"),
+                "room_model": "studio",
+                "room_amount": 0.20,
+                "preset_name": f"Track ({role})",
+                "enabled": True,
+            },
+        )
+        corr_spatial = dict(default_spatial)
+        if "pan" in (role_cfg or {}):
+            corr_spatial["azimuth_deg"] = float(role_cfg["pan"]) * 60.0
+        corr.spatial_config = corr_spatial
+
         if role_cfg:
             target_level = role_cfg.get("level", 0.0)
             # Keep anchor's level, set others relative to it. If the anchor
             # itself has no profile role, fall back to relative-to-anchor.
-            adj = (target_level - anchor_target) - (analysis.lufs - analyses[anchor_idx].lufs)
+            adj = (target_level - anchor_target) - (
+                analysis.lufs - analyses[anchor_idx].lufs
+            )
             corr.volume_db = round(min(max(adj, -18.0), 18.0), 1)
             if "pan" in role_cfg:
                 corr.pan = role_cfg["pan"]
@@ -310,19 +513,30 @@ def compute_mix(
         # compare the measured curve to the profile curve after removing each
         # curve's mean, and report the relative per-band adjustment.
         measured_curve = np.array(
-            [analysis.bandwidth_db[b["band"]] for b in profile.frequency_balance
-             if b["band"] in analysis.bandwidth_db]
+            [
+                analysis.bandwidth_db[b["band"]]
+                for b in profile.frequency_balance
+                if b["band"] in analysis.bandwidth_db
+            ]
         )
         target_curve = np.array(
-            [b["target_db"] for b in profile.frequency_balance
-             if b["band"] in analysis.bandwidth_db]
+            [
+                b["target_db"]
+                for b in profile.frequency_balance
+                if b["band"] in analysis.bandwidth_db
+            ]
         )
         if len(measured_curve) == len(target_curve) and len(measured_curve) > 0:
             deviation = measured_curve - target_curve  # + = louder than target
             shape_error = deviation - deviation.mean()  # removes overall level
-            for (band_spec, rel) in zip(
-                [b for b in profile.frequency_balance if b["band"] in analysis.bandwidth_db],
+            for band_spec, rel in zip(
+                [
+                    b
+                    for b in profile.frequency_balance
+                    if b["band"] in analysis.bandwidth_db
+                ],
                 shape_error,
+                strict=False,
             ):
                 rel_delta = float(round(-rel, 1))  # + = boost this band
                 measured = analysis.bandwidth_db[band_spec["band"]]
@@ -369,6 +583,24 @@ def compute_mix(
                 f"bus comp: ratio {comp['ratio']}:1, "
                 f"attack {comp['attack_ms']}ms, release {comp['release_ms']}ms"
             )
+
+    # -- planner: strip per-track EQ deltas promoted to the bus ------------
+    if use_planner:
+        # Lazy import: planner imports types from this module.
+        from .planner import classify_master_bands
+
+        master_bands = classify_master_bands(analyses, corrections)
+        if master_bands:
+            for corr in corrections:
+                kept = [b for b in corr.band_corrections if b.band not in master_bands]
+                removed = len(corr.band_corrections) - len(kept)
+                if removed:
+                    corr.notes.append(
+                        f"{removed} band correction(s) for "
+                        f"{', '.join(sorted(set(master_bands)))} promoted to "
+                        f"mastering EQ (shared across tracks)"
+                    )
+                corr.band_corrections = kept
 
     return MixResult(
         style=profile.name,

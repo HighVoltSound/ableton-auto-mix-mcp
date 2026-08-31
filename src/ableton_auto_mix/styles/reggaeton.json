@@ -1,0 +1,47 @@
+{
+  "name": "reggaeton",
+  "label": "Reggaeton / Latin",
+  "target_lufs": -9.0,
+  "target_lra": 4.0,
+  "tempo_range": [85, 105],
+  "stereo_width": "moderate",
+  "frequency_balance": [
+    {"band": "sub_bass", "freq_range": [20, 60], "target_db": 0.0, "weight": 1.0},
+    {"band": "bass", "freq_range": [60, 120], "target_db": -2.0, "weight": 0.9},
+    {"band": "low_mids", "freq_range": [120, 250], "target_db": -6.0, "weight": 0.7},
+    {"band": "mids", "freq_range": [250, 2000], "target_db": -8.0, "weight": 0.6},
+    {"band": "high_mids", "freq_range": [2000, 6000], "target_db": -5.0, "weight": 0.8},
+    {"band": "highs", "freq_range": [6000, 20000], "target_db": -10.0, "weight": 0.5}
+  ],
+  "track_balance": {
+    "kick": {"level": -3.0, "pan": 0.0, "width": "mono"},
+    "sub_bass": {"level": -2.0, "pan": 0.0, "width": "mono"},
+    "snare": {"level": -6.0, "pan": 0.0, "width": "narrow"},
+    "hihat": {"level": -14.0, "pan": 0.3, "width": "wide"},
+    "vocal": {"level": -5.0, "pan": 0.0, "width": "narrow"},
+    "vocal_chop": {"level": -10.0, "pan": 0.2, "width": "wide"},
+    "synth": {"level": -10.0, "pan": 0.15, "width": "wide"},
+    "percussion": {"level": -12.0, "pan": 0.35, "width": "very_wide"}
+  },
+  "compression": {
+    "bus": {"ratio": 3.5, "attack_ms": 8, "release_ms": 100, "makeup_db": 0.0, "style": "glue"},
+    "kick": {"ratio": 5.0, "attack_ms": 3, "release_ms": 60, "makeup_db": 2.0},
+    "sub_bass": {"ratio": 4.0, "attack_ms": 5, "release_ms": 80, "makeup_db": 1.5},
+    "vocal": {"ratio": 3.0, "attack_ms": 8, "release_ms": 120, "makeup_db": 1.0}
+  },
+  "sidechain": {
+    "kick_duck_sub_bass": {"amount_db": -5.0, "attack_ms": 3, "release_ms": 80}
+  },
+  "highpass": {
+    "hihat": 200,
+    "vocal_chop": 150,
+    "percussion": 100
+  },
+  "fx_suggestions": [
+    "heavy sidechain on sub to kick",
+    "dembow rhythm emphasis via transient shaping",
+    "vocal doubles and ad-libs panned wide",
+    "tropical reverb on vocal chops"
+  ],
+  "description": "Латинский ритм: мощный 808 саб, dembow кик, яркие вокалы. Тяжёлый сайдчейн, тропический вайб."
+}

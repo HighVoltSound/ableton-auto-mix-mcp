@@ -2,8 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [master]
+    branches: [main, master]
   pull_request:
+    branches: [main, master]
 
 jobs:
   test:
@@ -11,16 +12,56 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.10", "3.11", "3.12"]
+
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install package
+
+      - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -e .
-      - name: Import check
-        run: python -c "import ableton_auto_mix; print('import OK')"
-      - name: Run smoke tests
-        run: python tests/test_smoke.py
+          pip install -e ".[dev]" 2>/dev/null || pip install -e .
+          pip install pytest ruff mypy
+
+      - name: Ruff lint
+        run: ruff check src/ tests/
+
+      - name: Ruff format check
+        run: ruff format --check src/ tests/
+
+      - name: Mypy
+        run: mypy src/ableton_auto_mix/ --ignore-missing-imports
+        continue-on-error: true
+
+      - name: Tests
+        run: python -m pytest tests/ -q --tb=short --ignore=tests/test_preview_harness.py
+
+      - name: Preview harness
+        run: python -m pytest tests/test_preview_harness.py -v --tb=short
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: desktop/package-lock.json
+
+      - name: Install
+        working-directory: desktop
+        run: npm ci
+
+      - name: Type check
+        working-directory: desktop
+        run: npx tsc -b --noEmit
+
+      - name: Build
+        working-directory: desktop
+        run: npm run build

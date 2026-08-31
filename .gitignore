@@ -13,11 +13,19 @@ renders/*.wav
 renders/*.aiff
 renders/*.mp3
 renders/*.asd
+renders/.musicmixcode.json
+
+# Desktop app
+desktop/node_modules/
+desktop/dist/
+desktop/src-tauri/target/
+desktop/src-tauri/binaries/
 
 # Tooling
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+.ruff/
 
 # OS
 .DS_Store
@@ -33,3 +41,11 @@ reddit_post_ableton.txt
 reddit_post_local_llama.txt
 render_raw_mix.py
 release_notes_*.md
+
+# Runtime data
+src/ableton_auto_mix/reference_db.json
+export_session.als
+musicmixcode-backend*.spec
+
+# VST plugin builds
+plugins/*/target/

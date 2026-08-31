@@ -20,9 +20,11 @@ C:\Users\highv\Documents\Default Project\ableton-auto-mix-mcp\
 │   ├── reference.py              # Match-EQ по референсу
 │   ├── profiles.py               # Загрузчик стилей
 │   ├── qa.py                     # Конфликты + релиз-чек
-│   ├── api_app.py                # FastAPI (10 эндпоинтов, порт 8787)
+│   ├── ableton_export.py         # Движок экспорта в Ableton (live + file)
+│   ├── als_xml.py                # Минимальный .als XML билдер
+│   ├── api_app.py                # FastAPI (11 эндпоинтов, порт 8787)
 │   └── styles\*.json             # 11 профилей стилей
-├── tests\                        # pytest тесты (33 passing)
+├── tests\                        # pytest тесты (74 passing)
 ├── build_backend.spec            # PyInstaller spec (139 MB onedir)
 ├── scripts\
 │   ├── backend_entry.py          # Sidecar-лаунчер
@@ -62,7 +64,7 @@ C:\Users\highv\Documents\Default Project\ableton-auto-mix-mcp\
 
 - Прочитай соответствующий хенджофф-файл (HANDOFFS/0N_*.md)
 - Прочитай доменную модель (`HANDOFFS/00_DOMAIN_MODEL.md`) для контекста архитектуры
-- Проверь текущее состояние тестов: `python -m pytest tests -q` (ожидается 33+ passing)
+- Проверь текущее состояние тестов: `python -m pytest tests -q` (ожидается 74+ passing)
 - Проверь фронт: в `desktop/` → `npm.cmd run build` (ожидается 0 TS ошибок)
 
 ### 3. Выполнение
@@ -117,6 +119,7 @@ C:\Users\highv\Documents\Default Project\ableton-auto-mix-mcp\
 | POST | `/api/release` | Проверка готовности к релизу |
 | POST | `/api/conflicts` | Частотные конфликты |
 | POST | `/api/match_eq` | Кривая match-EQ |
+| POST | `/api/export` | Экспорт в Ableton (live/file) |
 | GET | `/api/audio?path=` | WAV-файл (audio/wav) |
 | GET | `/api/waveform?path=&points=` | Пик-огибающая для графика |
 
@@ -144,5 +147,6 @@ scripts\build_all.ps1
 - `mem_mta8bvbt` — Планировщик, PyInstaller оптимизация, sidecar
 - `mem_mta8yp0a` — Доменная модель, хенджоффы, delegation паттерн
 - `mem_mtabpo51` — Task 1: Waveform/Spectrum/Heatmap визуализация
+- `mem_mtad7q6j` — Task 2: Export to Ableton Live (als_xml, ableton_export, ExportDialog)
 
 Дополнительно: `MEMORY.md` — лог решений по сессиям (читай в начале, обновляй в конце).

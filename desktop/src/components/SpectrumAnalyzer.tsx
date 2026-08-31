@@ -10,6 +10,7 @@ import {
 } from 'recharts'
 import type { ConflictPair, SpectrumPoint } from '@/types'
 import { Badge, Card } from './ui'
+import { useLanguage } from '@/i18n'
 
 interface SpectrumAnalyzerProps {
   measured: SpectrumPoint[]
@@ -60,6 +61,7 @@ function bandToHzRange(band: string): [number, number] | null {
 }
 
 export function SpectrumAnalyzer({ measured, target, conflicts }: SpectrumAnalyzerProps) {
+  const { t } = useLanguage()
   const chartData = useMemo(() => mergeCurves(measured, target ?? []), [measured, target])
   const hasTargetCurve = chartData.some((d) => d.target !== undefined)
 
@@ -78,10 +80,10 @@ export function SpectrumAnalyzer({ measured, target, conflicts }: SpectrumAnalyz
     return (
       <Card className="p-5">
         <div className="mb-4 flex items-center justify-between gap-4">
-          <h3 className="text-sm font-semibold text-white">Spectral curve</h3>
+          <h3 className="text-sm font-semibold text-white">{t('dashboard.spectralCurve')}</h3>
         </div>
         <div className="flex h-72 items-center justify-center text-xs text-white/35">
-          No spectral data available for this track.
+          {t('dashboard.noSpectralData')}
         </div>
       </Card>
     )
@@ -91,13 +93,13 @@ export function SpectrumAnalyzer({ measured, target, conflicts }: SpectrumAnalyz
     <Card className="p-5">
       <div className="mb-4 flex items-center justify-between gap-4">
         <h3 className="text-sm font-semibold text-white">
-          Spectral curve{' '}
-          <span className="font-normal text-white/40">— click a row above to switch tracks</span>
+          {t('dashboard.spectralCurve')}{' '}
+          <span className="font-normal text-white/40">{t('dashboard.clickRowHint')}</span>
         </h3>
         <div className="flex gap-2">
-          <Badge tone="violet">measured</Badge>
-          {hasTargetCurve && <Badge tone="green">style target</Badge>}
-          {conflictRanges.length > 0 && <Badge tone="red">conflicts</Badge>}
+          <Badge tone="violet">{t('dashboard.measured')}</Badge>
+          {hasTargetCurve && <Badge tone="green">{t('dashboard.styleTarget')}</Badge>}
+          {conflictRanges.length > 0 && <Badge tone="red">{t('dashboard.conflicts')}</Badge>}
         </div>
       </div>
       <div className="h-72 w-full">

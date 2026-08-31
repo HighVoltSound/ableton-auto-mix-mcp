@@ -1,0 +1,59 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "MusicMixCode Desktop",
+  "version": "0.1.0",
+  "identifier": "com.highvolt.musicmixcode",
+  "build": {
+    "beforeDevCommand": "npm.cmd run dev",
+    "devUrl": "http://localhost:5173",
+    "beforeBuildCommand": "npm.cmd run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "withGlobalTauri": false,
+    "windows": [
+      {
+        "title": "MusicMixCode Desktop",
+        "label": "main",
+        "width": 1360,
+        "height": 860,
+        "minWidth": 1024,
+        "minHeight": 680,
+        "resizable": true,
+        "center": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis", "dmg"],
+    "icon": ["icons/icon.ico"],
+    "externalBin": ["binaries/musicmixcode-backend"],
+    "resources": {
+      "binaries/_internal/**/*": "_internal/"
+    },
+    "windows": {
+      "nsis": {
+        "installerIcon": "icons/icon.ico",
+        "languages": ["English", "Russian"]
+      }
+    },
+    "macOS": {
+      "minimumSystemVersion": "10.15"
+    }
+  },
+  "plugins": {
+    "updater": {
+      "endpoints": [
+        "https://releases.highvoltsound.com/musicmixcode/{{target}}/{{arch}}/{{current_version}}.json"
+      ],
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQgc2lnbmF0dXJlIGhlcmU=",
+      "windows": {
+        "installMode": "quiet"
+      }
+    }
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "name": "classical",
+  "label": "Classical / Orchestral",
+  "target_lufs": -18.0,
+  "target_lra": 10.0,
+  "tempo_range": [40, 200],
+  "stereo_width": "very_wide",
+  "frequency_balance": [
+    {"band": "sub_bass", "freq_range": [20, 60], "target_db": -6.0, "weight": 0.7},
+    {"band": "bass", "freq_range": [60, 120], "target_db": 0.0, "weight": 1.0},
+    {"band": "low_mids", "freq_range": [120, 250], "target_db": -2.0, "weight": 0.9},
+    {"band": "mids", "freq_range": [250, 2000], "target_db": 0.0, "weight": 1.0},
+    {"band": "high_mids", "freq_range": [2000, 6000], "target_db": -1.0, "weight": 0.9},
+    {"band": "highs", "freq_range": [6000, 20000], "target_db": -3.0, "weight": 0.8}
+  ],
+  "track_balance": {
+    "violins": {"level": -6.0, "pan": -0.15, "width": "wide"},
+    "violas": {"level": -7.0, "pan": -0.05, "width": "moderate"},
+    "cellos": {"level": -5.0, "pan": 0.1, "width": "narrow"},
+    "basses": {"level": -4.0, "pan": 0.15, "width": "narrow"},
+    "flute": {"level": -8.0, "pan": -0.2, "width": "moderate"},
+    "oboe": {"level": -9.0, "pan": 0.15, "width": "narrow"},
+    "clarinet": {"level": -9.0, "pan": -0.1, "width": "narrow"},
+    "horns": {"level": -7.0, "pan": 0.25, "width": "moderate"},
+    "trumpets": {"level": -6.0, "pan": 0.3, "width": "moderate"},
+    "tympani": {"level": -8.0, "pan": 0.0, "width": "narrow"}
+  },
+  "compression": {
+    "bus": {"ratio": 1.5, "attack_ms": 30, "release_ms": 300, "makeup_db": 0.0, "style": "glue"}
+  },
+  "fx_suggestions": [
+    "hall reverb for concert hall ambiance",
+    "no compression on individual sections",
+    "preserve dynamic range at all costs",
+    "stereo widener on strings for immersion"
+  ],
+  "description": "Концертный зал: максимальная динамика, просторное стерео, минимум обработки. Уважение к оркестровой акустике."
+}

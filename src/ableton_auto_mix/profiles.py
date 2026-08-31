@@ -33,7 +33,7 @@ class StyleProfile:
     description: str = ""
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "StyleProfile":
+    def from_dict(cls, data: dict[str, Any]) -> StyleProfile:
         return cls(
             name=data["name"],
             label=data.get("label", data["name"]),
@@ -109,4 +109,9 @@ def get_profile(name: str) -> StyleProfile:
     for profile in list_profiles():
         if profile.name == name:
             return profile
-    raise KeyError(f"Unknown style '{name}'. Available: {', '.join(p.name for p in list_profiles())}")
+    raise KeyError(
+        f"Unknown style '{name}'. Available: {', '.join(p.name for p in list_profiles())}"
+    )
+
+
+load_profile = get_profile

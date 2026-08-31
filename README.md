@@ -1,147 +1,152 @@
-# MusicMixCode — Ableton Auto-Mix MCP
+# MusicMixCode Desktop
 
 > 🇷🇺 [Читать на русском](README.ru.md)
 
-[![PyPI](https://img.shields.io/pypi/v/ableton-auto-mix-mcp.svg)](https://pypi.org/project/ableton-auto-mix-mcp/)
-[![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
 [![CI](https://github.com/HighVoltSound/ableton-auto-mix-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/HighVoltSound/ableton-auto-mix-mcp/actions)
-[![Glama score](https://glama.ai/mcp/servers/HighVoltSound/ableton-auto-mix-mcp/badges/score.svg)](https://glama.ai/mcp/servers/HighVoltSound/ableton-auto-mix-mcp)
-[![Glama MCP server](https://glama.ai/mcp/servers/HighVoltSound/ableton-auto-mix-mcp/badges/card.svg)](https://glama.ai/mcp/servers/HighVoltSound/ableton-auto-mix-mcp)
+[![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
 
-![Demo waveform — before vs after](assets/demo_waveform.png)
+![Desktop App](assets/demo_waveform.png)
 
-An MCP server for auto-mixing and auto-mastering in Ableton Live **tuned to a musical style/genre**.
-An AI agent (opencode, Claude Code, Claude Desktop...) analyzes render files of your tracks, compares them against a
-style profile and produces/applies corrections: levels, pan, EQ hints, compression — and additionally renders a
-mastered preview mix (sidechain, HPF, mud-cut, soft-clipper, true-peak limiter).
+AI-powered mixing and mastering — both as an MCP server for AI agents and a standalone desktop app.
 
-## Features
+## What's Inside
 
-- **10 MCP tools**: analysis, style-based auto-mix, preview render, release check.
-- **11 style profiles** (JSON): techno, hip_hop, pop, lo_fi, ambient, balanced, trance, breaks, dubstep, drum_n_bass, trap.
-- **Mastering stage**: sidechain (kick → bass, snare-band Dynamic EQ), role-based HPF, 200–500 Hz mud-cut,
-  tanh soft-clipper, LUFS normalization, true-peak lookahead limiter (4× oversampling), TPDF dither.
-- **Stereo imaging**: mid/side width per role (mono for kick/sub, wide/very_wide for hats/pads) + panning.
-- **Spectral role detection**: if the file name doesn't hint a role, it's inferred from the spectrum.
-- **Release Check**: LUFS/LRA/true-peak/RMS/sub-mid-gap against top-label targets — `ready` / `needs_work` verdict.
-- **Conflict analysis**: which track pairs fight over frequency bands.
-- **Offline mode**: analysis and previews work without Ableton Live (only WAV renders are needed).
+| Layer | Stack | What it does |
+|-------|-------|-------------|
+| **Desktop App** | Tauri 2 + React + TypeScript | Visual mixing interface with waveform, EQ, 3D spatializer |
+| **Backend API** | FastAPI (Python 3.10+) | REST API for analysis, preview render, export |
+| **MCP Server** | stdio/OSC | 13 tools for AI agents (opencode, Claude Code) |
+| **DSP Engine** | numpy + scipy | Full mastering chain: EQ, compression, sidechain, limiting |
+
+## Desktop Features
+
+- **Waveform Editor** — visual track import, drag & drop, volume/pan per track
+- **Style Profiles** — 18 genre presets (techno, hip-hop, ambient, jazz, metal, R&B...)
+- **AI Recommendations** — RAG-powered suggestions for compression, sidechain, EQ
+- **Master Preview** — render mastered mix to WAV with full DSP chain
+- **Live Spectrum** — real-time FFT visualization during playback
+- **3D Spatializer** — binaural head-tracking positioning per track
+- **EQ Editor** — interactive frequency curve with drag handles
+- **Export** — Ableton Live (.als), JSON (universal), or WAV/FLAC/MP3 format conversion
+- **i18n** — English & Russian
+- **Auto-Update** — via GitHub Releases
+
+## Quick Start
+
+### Desktop App
+
+```bash
+# Windows
+cd desktop
+npm install
+npm run tauri dev    # development
+npm run tauri build  # release build → src-tauri/target/release/bundle/
+
+# macOS (requires Xcode CLI tools)
+cd desktop
+npm install
+npm run tauri dev
+npm run tauri build  # → DMG
+```
+
+### Backend Only (API / MCP Server)
+
+```bash
+pip install -e ".[dev]"
+python -m ableton_auto_mix          # MCP server
+python -m uvicorn ableton_auto_mix.api_app:app --port 8787  # REST API
+```
 
 ## Architecture
 
 ```
-You → MCP client → ableton-auto-mix-mcp (MCP server)
-                         ├── styles/*.json     — style profiles (target curves)
-                         ├── analyzer.py       — LUFS/LRA, spectrum, stereo width (librosa/pyloudnorm)
-                         ├── mixer.py          — engine: analysis vs profile → corrections (anchor = kick, LUFS)
-                         ├── preview.py        — preview-mix render + mastering chain
-                         ├── qa.py             — conflict analysis + release check
-                         └── ableton_client.py — AbletonOSC (python-osc) → Ableton Live
+desktop/src-tauri/
+  ├── src/main.rs          # Tauri entry point
+  └── tauri.conf.json      # App config, bundling, auto-update
+
+desktop/src/
+  ├── components/
+  │   ├── WaveformEditor.tsx     # Track waveform + per-track controls
+  │   ├── MixPanel.tsx           # Main mixing interface
+  │   ├── LiveSpectrum.tsx       # Real-time FFT via WebAudio
+  │   ├── Spatializer3D.tsx      # Binaural positioning
+  │   ├── EqCurveChart.tsx       # Interactive EQ editor
+  │   ├── ReferencePlayer.tsx    # A/B reference playback
+  │   ├── ExportDialog.tsx       # Export to Ableton/JSON/Audio
+  │   └── ui/                    # Glassmorphism UI primitives
+  ├── lib/api.ts           # FastAPI client
+  └── i18n/                # en.json, ru.json
+
+src/ableton_auto_mix/
+  ├── analyzer.py          # LUFS/LRA, spectrum, stereo width
+  ├── mixer.py             # Style-based corrections engine
+  ├── preview.py           # Mastering chain render
+  ├── reference_store.py   # RAG reference database
+  ├── ai_recommender.py    # AI mixing recommendations
+  ├── ableton_export.py    # .als + JSON export
+  ├── logging_utils.py     # Structured logging
+  ├── ableton_client.py    # AbletonOSC bridge
+  ├── dsp/                 # Biquad filters, EQ, compression, spatial
+  └── styles/              # 18 genre profiles (JSON)
 ```
 
-Principle: **the MCP itself does not "mix"** — it provides tools and metrics while the model decides.
-Cycle: render → analyze → dry-run report → preview mix → release check → apply corrections.
+## Style Profiles (18)
 
-## Installation
+Electronic: `techno`, `trance`, `breaks`, `dubstep`, `drum_n_bass`, `trap`, `lo_fi`
+Pop/Hip-Hop: `pop`, `hip_hop`, `rnb`
+Rock/Metal: `rock`, `metal`
+Jazz/Soul: `jazz`, `funk`, `country`, `classical`
+Ambient/Cinematic: `ambient`
+General: `balanced`
 
-```bash
-pip install -r requirements.txt        # or: pip install -e .
-```
+Each defines: target LUFS/LRA, spectral curve (6 bands), per-role levels, HPF, sidechain, compression, FX recommendations.
 
-Then connect the MCP server in your client (example for Claude Code / opencode):
+## MCP Tools
 
-```json
-{ "mcpServers": { "ableton-auto-mix": {
-    "command": "python", "args": ["-m", "ableton_auto_mix"],
-    "cwd": "C:/path/to/ableton-auto-mix-mcp"
-}}}
-```
+| Tool | Description |
+|------|-------------|
+| `list_styles` | List all available style profiles |
+| `get_style(name)` | Full profile details |
+| `get_ableton_status` | Check Ableton Live connection |
+| `analyze_audio(path)` | Metrics for one WAV |
+| `analyze_render_dir(dir)` | Metrics for all renders |
+| `auto_mix(style, dir, dry_run)` | Corrections (dry-run or apply) |
+| `suggest_style(dir)` | Best-fitting style for material |
+| `preview_mix(style, dir)` | Render mastered preview WAV |
+| `analyze_conflicts(dir)` | Frequency clashes between tracks |
+| `release_check(style, dir)` | LUFS/TP/LRA vs label targets |
 
-> Analysis and preview rendering do not require Ableton Live — one WAV per track is enough.
+## Export Modes
 
-## Ableton setup (optional, for auto-apply)
-
-1. Launch Ableton Live.
-2. Install the **AbletonOSC** control surface (https://github.com/ideoforms/AbletonOSC).
-3. Preferences → Link, Tempo & MIDI → Control Surface → AbletonOSC.
-4. Bounce each track into `renders/` (one WAV per track) for analysis.
-
-## MCP tools
-
-| Tool | What it does |
-|---|---|
-| `list_styles` | list of styles and their targets |
-| `get_style(name)` | full style profile (curve, balance, compression, FX) |
-| `get_ableton_status` | check the connection to Live |
-| `analyze_audio(path)` | metrics for one WAV |
-| `analyze_render_dir(dir)` | metrics for all renders |
-| `auto_mix(style, render_dir, dry_run)` | corrections for a style (dry-run or apply to Live) |
-| `suggest_style(render_dir)` | which style fits your material best |
-| `preview_mix(style, render_dir, ...)` | render a master-ready preview mix to WAV |
-| `analyze_conflicts(render_dir)` | track pairs fighting for frequency bands |
-| `release_check(style, render_dir)` | LUFS/TP/LRA vs label targets, `ready`/`needs_work` verdict |
-
-## Example session
-
-```
-"Mix the renders from renders/ in a techno style, show what to change"
-→ auto_mix("techno", "renders", true)
-
-"OK, go ahead"
-→ auto_mix("techno", "renders", false)
-
-"Render a mastered preview mix"
-→ preview_mix("breaks", "renders", max_duration=30)
-
-"Check if the mix is release-ready"
-→ release_check("breaks", "renders")
-```
-
-## CLI (without an MCP client)
-
-Everything is available from the command line via `python -m ableton_auto_mix <command>`
-(or `ableton-auto-mix-mcp <command>` after installing):
-
-```bash
-ableton-auto-mix-mcp styles                                  # list styles
-ableton-auto-mix-mcp style breaks                            # style profile
-ableton-auto-mix-mcp analyze renders/                        # metrics of all renders
-ableton-auto-mix-mcp suggest renders/                        # which style fits
-ableton-auto-mix-mcp mix breaks renders/                     # dry-run: what to change
-ableton-auto-mix-mcp preview breaks renders/ --max-duration 30   # preview mix to WAV
-ableton-auto-mix-mcp conflicts renders/                      # frequency conflicts
-ableton-auto-mix-mcp release breaks renders/                 # ready/needs_work verdict
-```
-
-Output is JSON (script-friendly). Example: `preview breaks renders/ --manual-gain "bass=2.0,snt2=-4.0" --output out.wav`.
-
-## Styles
-
-Styles ship inside the package (`ableton_auto_mix/styles/`) — 11 profiles: techno, hip_hop, pop, lo_fi, ambient,
-balanced, trance, breaks, drum_n_bass, trap.
-Each profile defines: target LUFS/LRA, a spectral curve (6 bands), relative instrument levels
-(kick/bass/vocals/lead/wobble/breaks/...), per-role HPF, mud-cut, sidechain, mastering settings, compression and
-FX recommendations. You can add your own: copy a JSON and change `name` and targets.
-
-To use custom styles without editing the package, point to an env var:
-
-```bash
-export ABLETON_AUTO_MIX_STYLES_DIR=/path/to/my-styles
-```
+| Mode | Description |
+|------|-------------|
+| **Ableton (.als)** | Full session with audio tracks, gain, pan, EQ Eight |
+| **JSON** | Universal format for any DAW via scripting |
+| **Apply to Live** | Push corrections directly via AbletonOSC |
+| **Audio** | WAV (16/24/32-bit), FLAC, MP3 (128–320kbps) |
 
 ## Tests
 
 ```bash
-python tests/test_smoke.py   # 5 smoke tests: render → mix → preview → release check
+python -m pytest tests/test_core_units.py -q    # 16 unit tests
+python -m pytest tests/test_rag.py -q           # 13 RAG tests
+python -m pytest tests/test_preview_harness.py -q  # 9 e2e tests
 ```
 
-## Limitations
+## CI/CD
 
-- Analysis is done on **renders** (offline), since Live doesn't stream samples in real time via OSC.
-- A track role is inferred from its filename; unknown names fall back to spectrum analysis (kick, bass, vocals...).
-  Name tracks explicitly for accuracy.
-- `auto_mix(dry_run=false)` requires a running Ableton Live with the AbletonOSC control surface.
-- Preview mastering applies the profile's standard chain; do the final touch-up manually.
+- **CI** (`.github/workflows/ci.yml`) — Python 3.10–3.12, ruff, mypy, frontend build
+- **Release** (`.github/workflows/release.yml`) — Windows NSIS + macOS DMG (Intel + ARM)
+- **Pre-commit** — ruff lint/format, mypy
+
+To trigger a release build:
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+# → GitHub Actions builds Windows .exe + macOS .dmg
+# → Creates draft release with artifacts
+```
 
 ## License
 

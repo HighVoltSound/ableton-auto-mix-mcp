@@ -16,9 +16,9 @@ import numpy as np
 import pyloudnorm as pyln
 import soundfile as sf
 
-from .analyzer import TrackAnalysis, analyze_directory
+from .analyzer import TrackAnalysis
+from .dsp._utils import true_peak_db as _true_peak_db
 from .mixer import match_role_with_spectrum
-from .preview import _true_peak_db
 
 CONFLICT_BANDS: list[tuple[str, float, float]] = [
     ("sub_bass", 20.0, 60.0),
@@ -94,7 +94,9 @@ def _conflict_suggestion(role_a: str, role_b: str, band: str) -> str:
     if band == "mids" or band == "high_mids":
         return "mid presence conflict: spread with panning or cut the other track's mids by 2-3 dB"
     if band == "highs":
-        return "top-end conflict: roll off highs on one track or widen it for separation"
+        return (
+            "top-end conflict: roll off highs on one track or widen it for separation"
+        )
     if role_a == "vocals" or role_b == "vocals":
         return "vocals buried here: carve this band out of the competing instrument"
     return "shared band energy; reduce one via EQ or ducking"

@@ -1,0 +1,49 @@
+{
+  "name": "metal",
+  "label": "Metal / Hard Rock",
+  "target_lufs": -7.0,
+  "target_lra": 3.0,
+  "tempo_range": [100, 200],
+  "stereo_width": "very_wide",
+  "frequency_balance": [
+    {"band": "sub_bass", "freq_range": [20, 60], "target_db": -2.0, "weight": 0.9},
+    {"band": "bass", "freq_range": [60, 120], "target_db": 0.0, "weight": 1.0},
+    {"band": "low_mids", "freq_range": [120, 250], "target_db": -4.0, "weight": 0.7},
+    {"band": "mids", "freq_range": [250, 2000], "target_db": -6.0, "weight": 0.6},
+    {"band": "high_mids", "freq_range": [2000, 6000], "target_db": -2.0, "weight": 0.9},
+    {"band": "highs", "freq_range": [6000, 20000], "target_db": -5.0, "weight": 0.7}
+  ],
+  "track_balance": {
+    "kick": {"level": -3.0, "pan": 0.0, "width": "mono"},
+    "bass": {"level": -2.0, "pan": 0.0, "width": "mono"},
+    "snare": {"level": -5.0, "pan": 0.0, "width": "narrow"},
+    "guitar_l": {"level": -6.0, "pan": -0.4, "width": "mono"},
+    "guitar_r": {"level": -6.0, "pan": 0.4, "width": "mono"},
+    "hihat": {"level": -14.0, "pan": 0.3, "width": "wide"},
+    "cymbals": {"level": -12.0, "pan": 0.2, "width": "wide"},
+    "vocal": {"level": -5.0, "pan": 0.0, "width": "narrow"}
+  },
+  "compression": {
+    "bus": {"ratio": 4.0, "attack_ms": 5, "release_ms": 80, "makeup_db": 0.0, "style": "glue"},
+    "kick": {"ratio": 6.0, "attack_ms": 3, "release_ms": 60, "makeup_db": 2.0},
+    "bass": {"ratio": 5.0, "attack_ms": 5, "release_ms": 80, "makeup_db": 1.5},
+    "snare": {"ratio": 4.0, "attack_ms": 2, "release_ms": 50, "makeup_db": 1.5}
+  },
+  "sidechain": {
+    "kick_duck_bass": {"amount_db": -3.0, "attack_ms": 3, "release_ms": 70}
+  },
+  "role_eq": {
+    "bass": [{"hz": 800, "gain_db": 3.0, "q": 1.0}],
+    "guitar": [{"hz": 3000, "gain_db": 2.0, "q": 0.8}]
+  },
+  "mud_cut": {
+    "guitar": {"hz": 300, "gain_db": -4.0, "q": 1.2}
+  },
+  "fx_suggestions": [
+    "double-track guitars L/R for width",
+    "tight sidechain on bass to kick",
+    "parallel compression on drums for punch",
+    "boost 2-5 kHz on guitars for cut"
+  ],
+  "description": "Агрессивный метал: громкий, плотный, широкий. Doble-tracked гитары, жёсткий кик, параллельная компрессия на драмах."
+}

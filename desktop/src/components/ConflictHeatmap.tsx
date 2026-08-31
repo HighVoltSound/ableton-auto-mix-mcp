@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import type { ConflictPair } from '@/types'
 import { Card } from './ui'
+import { useLanguage } from '@/i18n'
 
 interface ConflictHeatmapProps {
   tracks: string[]
@@ -20,6 +21,7 @@ function gapSeverity(gap: number): { bg: string; text: string } {
 }
 
 export function ConflictHeatmap({ tracks, conflicts }: ConflictHeatmapProps) {
+  const { t } = useLanguage()
   const [tooltip, setTooltip] = useState<{
     x: number
     y: number
@@ -47,7 +49,7 @@ export function ConflictHeatmap({ tracks, conflicts }: ConflictHeatmapProps) {
   if (tracks.length === 0 || conflicts.length === 0) {
     return (
       <Card className="p-5 text-sm text-white/45">
-        No conflicts detected (or the conflict scan hasn't run yet).
+        {t('dashboard.noConflicts')}
       </Card>
     )
   }
@@ -140,15 +142,15 @@ export function ConflictHeatmap({ tracks, conflicts }: ConflictHeatmapProps) {
 
       {/* Legend */}
       <div className="mt-3 flex items-center gap-4 text-[10px] text-white/45">
-        <span>Severity:</span>
+        <span>{t('dashboard.severity')}</span>
         <span className="flex items-center gap-1">
-          <span className="inline-block h-2.5 w-2.5 rounded bg-emerald-500/20" /> Low
+          <span className="inline-block h-2.5 w-2.5 rounded bg-emerald-500/20" /> {t('dashboard.low')}
         </span>
         <span className="flex items-center gap-1">
-          <span className="inline-block h-2.5 w-2.5 rounded bg-yellow-500/20" /> Medium
+          <span className="inline-block h-2.5 w-2.5 rounded bg-yellow-500/20" /> {t('dashboard.medium')}
         </span>
         <span className="flex items-center gap-1">
-          <span className="inline-block h-2.5 w-2.5 rounded bg-red-500/25" /> High
+          <span className="inline-block h-2.5 w-2.5 rounded bg-red-500/25" /> {t('dashboard.high')}
         </span>
       </div>
     </div>

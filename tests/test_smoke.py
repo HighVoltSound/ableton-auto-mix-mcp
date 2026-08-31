@@ -5,7 +5,6 @@ offline (no Ableton needed): analyze -> auto-mix -> preview -> release check.
 from __future__ import annotations
 
 import os
-import shutil
 import sys
 
 import numpy as np
@@ -15,8 +14,8 @@ SRC = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src")
 sys.path.insert(0, os.path.abspath(SRC))
 
 import ableton_auto_mix.analyzer as analyzer  # noqa: E402
-import ableton_auto_mix.qa as qa  # noqa: E402
 import ableton_auto_mix.profiles as profiles  # noqa: E402
+import ableton_auto_mix.qa as qa  # noqa: E402
 from ableton_auto_mix.mixer import compute_mix, match_role  # noqa: E402
 from ableton_auto_mix.preview import render_preview_mix  # noqa: E402
 
@@ -45,7 +44,9 @@ def _make_render_dir(tmp: str) -> None:
     sf.write(os.path.join(tmp, "bass.wav"), bass, SR, subtype="PCM_16")
     # snare: noise burst
     rng = np.random.default_rng(7)
-    noise = rng.uniform(-1, 1, SR * int(DUR)) * np.exp(-np.linspace(0, 1, SR * int(DUR)) * 15)
+    noise = rng.uniform(-1, 1, SR * int(DUR)) * np.exp(
+        -np.linspace(0, 1, SR * int(DUR)) * 15
+    )
     snare = noise.reshape(-1, 1) * 0.4
     snare = np.repeat(snare, 2, axis=1)
     sf.write(os.path.join(tmp, "snare.wav"), snare, SR, subtype="PCM_16")
@@ -64,12 +65,20 @@ def test_match_role() -> None:
 
 def test_spectral_role_fallback() -> None:
     from ableton_auto_mix.mixer import _spectral_role
+
     # Unknown file name but clearly sub-heavy -> sub_bass.
-    sub = {"sub_bass": -20, "bass": -40, "low_mids": -60, "mids": -70,
-           "high_mids": -75, "highs": -80}
+    sub = {
+        "sub_bass": -20,
+        "bass": -40,
+        "low_mids": -60,
+        "mids": -70,
+        "high_mids": -75,
+        "highs": -80,
+    }
     assert _spectral_role(sub) == "sub_bass"
     # Name wins over spectrum when it matches.
     from ableton_auto_mix.mixer import match_role_with_spectrum
+
     assert match_role_with_spectrum("KICK", sub) == "kick"
     assert match_role_with_spectrum("weird_01", sub) == "sub_bass"
 
@@ -84,6 +93,7 @@ def test_true_peak_in_analysis(tmp_path) -> None:
 
 def test_width_processing() -> None:
     from ableton_auto_mix.preview import _apply_width
+
     x = np.array([[0.8, -0.8], [0.5, -0.5]], dtype=float)
     mono = _apply_width(x, "mono")
     assert np.allclose(mono, 0.0)  # folded to center
@@ -97,7 +107,14 @@ def test_width_processing() -> None:
 
 
 def test_space_fx() -> None:
-    from ableton_auto_mix.preview import _apply_space, _delay, _reverb, _sliding_max, _moving_average
+    from ableton_auto_mix.preview import (
+        _apply_space,
+        _delay,
+        _moving_average,
+        _reverb,
+        _sliding_max,
+    )
+
     rng = np.random.default_rng(3)
     x = rng.uniform(-0.5, 0.5, (SR, 2)) * 0.3
 
@@ -121,13 +138,14 @@ def test_space_fx() -> None:
     # Sliding max matches a hand-rolled trailing window max.
     m = np.abs(rng.uniform(-1, 1, (37, 2)))
     for w in (1, 5, 40):
-        ref = np.stack([
-            np.maximum.reduce(m[max(0, i - w + 1): i + 1], axis=0) for i in range(37)
-        ])
+        ref = np.stack(
+            [np.maximum.reduce(m[max(0, i - w + 1) : i + 1], axis=0) for i in range(37)]
+        )
         assert np.allclose(_sliding_max(m, w), ref), w
 
     # Moving average is linear-in-N and smooths an impulse.
-    imp = np.zeros((200, 2)); imp[50] = 1.0
+    imp = np.zeros((200, 2))
+    imp[50] = 1.0
     avg = _moving_average(imp, 10)
     assert np.allclose(avg[50:60], 0.1)
     assert np.allclose(avg[:50], 0.0)
@@ -141,7 +159,9 @@ def test_compressor() -> None:
     x = rng.uniform(-0.5, 0.5, (SR, 2))
     x[: int(0.05 * SR)] = 0.95  # a loud burst up front
     peak_in = float(np.max(np.abs(x)))
-    comp = _compressor(x, SR, threshold_db=-10.0, ratio=4.0, attack_ms=3.0, release_ms=80.0)
+    comp = _compressor(
+        x, SR, threshold_db=-10.0, ratio=4.0, attack_ms=3.0, release_ms=80.0
+    )
     assert comp.shape == x.shape
     assert np.all(np.isfinite(comp))
     # Loud part is tamed.
@@ -176,7 +196,9 @@ def test_preview_and_release(tmp_path) -> None:
     _make_render_dir(str(tmp_path))
     profile = profiles.get_profile("breaks")
     result = render_preview_mix(
-        str(tmp_path), profile, max_duration=1.5,
+        str(tmp_path),
+        profile,
+        max_duration=1.5,
     )
     out = result["output_path"]
     assert os.path.isfile(out)
@@ -199,12 +221,12 @@ def test_suggest_style_runs(tmp_path) -> None:
 
 def test_cli_commands(tmp_path) -> None:
     _make_render_dir(str(tmp_path))
-    from ableton_auto_mix.cli import main as cli_main
-
     # Each command must exit cleanly (SystemExit not raised) and print JSON.
     import io
     import json as _json
     from contextlib import redirect_stdout
+
+    from ableton_auto_mix.cli import main as cli_main
 
     cases = [
         ["styles"],
@@ -241,6 +263,7 @@ def _run_all() -> None:
         except Exception as exc:  # noqa: BLE001
             failed += 1
             import traceback
+
             print(f"FAIL {fn.__name__}: {exc}")
             traceback.print_exc()
     if failed:

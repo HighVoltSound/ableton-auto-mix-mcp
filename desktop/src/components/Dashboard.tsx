@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { lazy, Suspense, useMemo, useState } from 'react'
 import { LayoutDashboard } from 'lucide-react'
 import type {
   AnalysisResult,
@@ -7,9 +7,10 @@ import type {
   StyleProfile,
   TrackMetrics,
 } from '@/types'
-import { Card, EmptyState, SectionTitle } from './ui'
-import { SpectrumAnalyzer } from './SpectrumAnalyzer'
+import { Card, EmptyState, SectionTitle, Spinner } from './ui'
+const SpectrumAnalyzer = lazy(() => import('./SpectrumAnalyzer').then(m => ({ default: m.SpectrumAnalyzer })))
 import { ConflictHeatmap } from './ConflictHeatmap'
+import { useLanguage } from '@/i18n'
 
 /* ---------- helpers (tolerant to loose backend shapes) ---------- */
 
@@ -41,6 +42,7 @@ export function Dashboard({
   conflicts: ConflictsResult | null
   styleProfile: StyleProfile | null
 }) {
+  const { t } = useLanguage()
   const tracks = useMemo(
     () => analysis?.tracks ?? analysis?.metrics ?? [],
     [analysis],
@@ -73,8 +75,8 @@ export function Dashboard({
     return (
       <EmptyState
         icon={<LayoutDashboard size={36} />}
-        message="No analysis yet"
-        hint="Go to Setup, enter your renders directory and hit Analyze to populate the dashboard."
+        message={t('dashboard.noAnalysis')}
+        hint={t('dashboard.noAnalysisHint')}
       />
     )
   }
@@ -82,8 +84,8 @@ export function Dashboard({
   return (
     <div className="space-y-6 pt-10">
       <SectionTitle
-        title="Dashboard"
-        subtitle={`${tracks.length} track${tracks.length === 1 ? '' : 's'} analyzed${
+        title={t('dashboard.title')}
+        subtitle={`${tracks.length} ${tracks.length === 1 ? t('dashboard.tracksAnalyzed').replace('{count}', String(tracks.length)) : t('dashboard.tracksAnalyzedPlural').replace('{count}', String(tracks.length))}${
           styleProfile?.name ? ` · style: ${styleProfile.name}` : ''
         }`}
       />
@@ -94,12 +96,12 @@ export function Dashboard({
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="border-b border-white/10 text-[11px] uppercase tracking-wider text-white/40">
-                <th className="px-5 py-3 font-medium">Track</th>
-                <th className="px-4 py-3 font-medium">LUFS</th>
-                <th className="px-4 py-3 font-medium">RMS</th>
-                <th className="px-4 py-3 font-medium">Peak</th>
-                <th className="px-4 py-3 font-medium">LRA</th>
-                <th className="px-4 py-3 font-medium">Width</th>
+                <th className="px-5 py-3 font-medium">{t('dashboard.track')}</th>
+                <th className="px-4 py-3 font-medium">{t('dashboard.lufs')}</th>
+                <th className="px-4 py-3 font-medium">{t('dashboard.rms')}</th>
+                <th className="px-4 py-3 font-medium">{t('dashboard.peak')}</th>
+                <th className="px-4 py-3 font-medium">{t('dashboard.lra')}</th>
+                <th className="px-4 py-3 font-medium">{t('dashboard.width')}</th>
               </tr>
             </thead>
             <tbody>
@@ -139,17 +141,19 @@ export function Dashboard({
       </Card>
 
       {/* Spectrum analyzer */}
-      <SpectrumAnalyzer
-        measured={measuredSpectrum}
-        target={targetSpectrum}
-        conflicts={conflictList}
-      />
+      <Suspense fallback={<div className="h-48 rounded-xl border border-white/10 bg-black/30 flex items-center justify-center"><Spinner /></div>}>
+        <SpectrumAnalyzer
+          measured={measuredSpectrum}
+          target={targetSpectrum}
+          conflicts={conflictList}
+        />
+      </Suspense>
 
       {/* Conflicts heatmap */}
       <div>
         <SectionTitle
-          title="Frequency conflicts"
-          subtitle="Pairs of tracks fighting for the same band, with suggested fixes."
+          title={t('dashboard.frequencyConflicts')}
+          subtitle={t('dashboard.frequencyConflictsSubtitle')}
         />
         <ConflictHeatmap tracks={trackNames} conflicts={conflictList} />
       </div>
