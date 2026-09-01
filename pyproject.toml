@@ -30,6 +30,7 @@ dependencies = [
     "soundfile>=0.12",
     "pydantic>=2.0",
     "uvicorn>=0.30",
+    "fastapi>=0.110",
 ]
 
 [project.urls]

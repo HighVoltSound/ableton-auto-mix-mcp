@@ -17,8 +17,14 @@ import soundfile as sf
 from scipy.ndimage import median_filter, uniform_filter1d
 from scipy.signal import resample_poly, welch
 
-from .dsp.biquad import (
+from .dsp.biquad import (  # noqa: F401 — re-exported for preview.py
     apply_biquad,
+)
+from .dsp.biquad import (  # noqa: F401
+    high_shelf_biquad as _high_shelf_biquad,
+)
+from .dsp.biquad import (  # noqa: F401
+    low_shelf_biquad as _low_shelf_biquad,
 )
 from .dsp.biquad import (
     peaking_biquad as _peaking_biquad,
