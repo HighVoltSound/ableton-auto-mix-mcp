@@ -111,19 +111,11 @@ def classify_master_bands(
         same_sign = pos if len(pos) >= len(neg) else neg
         if len(same_sign) < MASTER_MIN_TRACKS:
             continue  # isolated deviation -> per-track EQ
-        notable = sum(
-            1
-            for a in analyses
-            if a.bandwidth_db.get(band, ENERGY_FLOOR_DB - 1.0) > ENERGY_FLOOR_DB
-        )
+        notable = sum(1 for a in analyses if a.bandwidth_db.get(band, ENERGY_FLOOR_DB - 1.0) > ENERGY_FLOOR_DB)
         share = len(same_sign) / max(notable, 1)
         median_abs = float(np.median(np.abs(same_sign)))
         if share >= MASTER_SIGN_SHARE and median_abs > MASTER_MEDIAN_MIN_DB:
-            offenders = [
-                name
-                for name, d in items
-                if (d > 0) == (float(np.median(same_sign)) > 0)
-            ]
+            offenders = [name for name, d in items if (d > 0) == (float(np.median(same_sign)) > 0)]
             master[band] = {
                 "delta_db": round(float(np.median(same_sign)), 2),
                 "offenders": offenders,
@@ -225,9 +217,7 @@ def _fmt_range(freq_range: list[float]) -> str:
 # ---------------------------------------------------------------------------
 
 
-def build_plan(
-    analyses: list[TrackAnalysis], profile: StyleProfile, mix: MixResult
-) -> Plan:
+def build_plan(analyses: list[TrackAnalysis], profile: StyleProfile, mix: MixResult) -> Plan:
     """Classify every correction into mixing (per-track) vs mastering (bus).
 
     Inputs are the analyzer metrics, the style profile and the per-track
@@ -242,23 +232,11 @@ def build_plan(
     master_bands = classify_master_bands(analyses, corrections)
 
     # ---------------- spectral: master EQ vs per-track EQ -----------------
-    range_by_band = {
-        b["band"]: [float(x) for x in b["freq_range"]]
-        for b in profile.frequency_balance
-    }
+    range_by_band = {b["band"]: [float(x) for x in b["freq_range"]] for b in profile.frequency_balance}
     for band, median_delta in sorted(master_bands.items()):
-        offenders = [
-            c.name
-            for c in corrections
-            if any(bc.band == band for bc in c.band_corrections)
-        ]
+        offenders = [c.name for c in corrections if any(bc.band == band for bc in c.band_corrections)]
         freq_range = range_by_band.get(band) or next(
-            (
-                bc.freq_range
-                for c in corrections
-                for bc in c.band_corrections
-                if bc.band == band
-            ),
+            (bc.freq_range for c in corrections for bc in c.band_corrections if bc.band == band),
             [_geomean(20, 20000) / 2, _geomean(20, 20000) * 2],
         )
         peak_hz = _locate_band_peak_hz(
@@ -286,8 +264,7 @@ def build_plan(
             }
         )
         notes.append(
-            f"mastering: '{band}' promoted to bus EQ "
-            f"(median {median_delta:+.1f} dB across {len(offenders)} tracks)"
+            f"mastering: '{band}' promoted to bus EQ (median {median_delta:+.1f} dB across {len(offenders)} tracks)"
         )
 
     # ---------------- per-track actions -----------------------------------
@@ -296,11 +273,7 @@ def build_plan(
         acts = 0
 
         # gain: track-balance deviation -> MIXING by definition.
-        if (
-            corr.role != "unknown"
-            and corr.volume_db is not None
-            and abs(corr.volume_db) >= 0.1
-        ):
+        if corr.role != "unknown" and corr.volume_db is not None and abs(corr.volume_db) >= 0.1:
             mix_actions.append(
                 {
                     "track": corr.name,
@@ -399,10 +372,7 @@ def build_plan(
                 ),
             }
         )
-        notes.append(
-            f"mastering: loudness {lufs_delta:+.1f} dB toward "
-            f"{profile.target_lufs} LUFS"
-        )
+        notes.append(f"mastering: loudness {lufs_delta:+.1f} dB toward {profile.target_lufs} LUFS")
 
     # ---------------- master stereo width ---------------------------------
     if analyses:
@@ -428,10 +398,7 @@ def build_plan(
                         ),
                     }
                 )
-                notes.append(
-                    f"mastering: bus width x{side_gain:.2f} toward "
-                    f"'{profile.stereo_width}'"
-                )
+                notes.append(f"mastering: bus width x{side_gain:.2f} toward '{profile.stereo_width}'")
 
     return Plan(
         style=profile.name,

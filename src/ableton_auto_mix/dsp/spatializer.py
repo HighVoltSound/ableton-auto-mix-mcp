@@ -25,9 +25,7 @@ class SpatializerConfig:
     # 0.0 = Neck, 0.25 = Occiput, 0.50 = Ear, 0.75 = Face, 1.0 = Crown/Overhead (над головой)
     head_position: float = 0.50
     azimuth_deg: float = 30.0  # -90 (full left) to +90 (full right)
-    elevation_deg: float = (
-        0.0  # -45 (down at neck) to +90 (straight above head / zenith)
-    )
+    elevation_deg: float = 0.0  # -45 (down at neck) to +90 (straight above head / zenith)
     distance_m: float = 1.0  # 0.3m to 3.0m
     mix: float = 1.0  # 0.0 (dry) to 1.0 (wet)
     bass_mono: bool = True  # Keep sub-bass < 120Hz centered mono
@@ -182,15 +180,11 @@ def apply_binaural_spatializer(
         sos_shadow = signal.butter(1, cutoff, btype="lowpass", fs=sr, output="sos")
         if azimuth_clamped > 0:
             shadowed = signal.sosfilt(sos_shadow, out_l)
-            out_l = (1.0 - shadow_amount * 0.5) * out_l + (
-                shadow_amount * 0.5
-            ) * shadowed
+            out_l = (1.0 - shadow_amount * 0.5) * out_l + (shadow_amount * 0.5) * shadowed
             out_l *= 1.0 - shadow_amount * 0.35
         else:
             shadowed = signal.sosfilt(sos_shadow, out_r)
-            out_r = (1.0 - shadow_amount * 0.5) * out_r + (
-                shadow_amount * 0.5
-            ) * shadowed
+            out_r = (1.0 - shadow_amount * 0.5) * out_r + (shadow_amount * 0.5) * shadowed
             out_r *= 1.0 - shadow_amount * 0.35
 
     # 3. Occiput / Neck / Crown Spectral Shaping
@@ -200,15 +194,9 @@ def apply_binaural_spatializer(
         back_factor = (0.40 - pos) / 0.40
         cutoff_back = max(3500.0, 8000.0 - back_factor * 4500.0)
         if cutoff_back < (sr * 0.45):
-            sos_back_lp = signal.butter(
-                1, cutoff_back, btype="lowpass", fs=sr, output="sos"
-            )
-            out_l = (1.0 - back_factor * 0.6) * out_l + (
-                back_factor * 0.6
-            ) * signal.sosfilt(sos_back_lp, out_l)
-            out_r = (1.0 - back_factor * 0.6) * out_r + (
-                back_factor * 0.6
-            ) * signal.sosfilt(sos_back_lp, out_r)
+            sos_back_lp = signal.butter(1, cutoff_back, btype="lowpass", fs=sr, output="sos")
+            out_l = (1.0 - back_factor * 0.6) * out_l + (back_factor * 0.6) * signal.sosfilt(sos_back_lp, out_l)
+            out_r = (1.0 - back_factor * 0.6) * out_r + (back_factor * 0.6) * signal.sosfilt(sos_back_lp, out_r)
 
         # Pinna & Occiput Notch (~7200 Hz)
         notch_freq = 7200.0 - back_factor * 1200.0
@@ -252,9 +240,7 @@ def apply_binaural_spatializer(
     out_r *= dist_atten
 
     # 6. Room Acoustics (Early Reflections)
-    out_l, out_r = _apply_room_reflections(
-        out_l, out_r, sr, config.room_model, config.room_amount
-    )
+    out_l, out_r = _apply_room_reflections(out_l, out_r, sr, config.room_model, config.room_amount)
 
     # Recombine sub-bass mono
     if config.bass_mono:

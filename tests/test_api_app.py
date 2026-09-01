@@ -41,19 +41,13 @@ def render_dir(tmp_path_factory) -> str:
     t = np.linspace(0, 0.25, n_kick, endpoint=False)
     kick = (np.exp(-t * 30) * np.sin(2 * np.pi * 60 * t)).reshape(-1, 1)
     kick = np.pad(kick, ((0, SR * int(DUR) - n_kick), (0, 0)))
-    sf.write(
-        os.path.join(tmp, "kick.wav"), np.repeat(kick, 2, axis=1), SR, subtype="PCM_16"
-    )
+    sf.write(os.path.join(tmp, "kick.wav"), np.repeat(kick, 2, axis=1), SR, subtype="PCM_16")
 
     bass = _tone(80).reshape(-1, 1) * 0.5
-    sf.write(
-        os.path.join(tmp, "bass.wav"), np.repeat(bass, 2, axis=1), SR, subtype="PCM_16"
-    )
+    sf.write(os.path.join(tmp, "bass.wav"), np.repeat(bass, 2, axis=1), SR, subtype="PCM_16")
 
     rng = np.random.default_rng(7)
-    noise = rng.uniform(-1, 1, SR * int(DUR)) * np.exp(
-        -np.linspace(0, 1, SR * int(DUR)) * 15
-    )
+    noise = rng.uniform(-1, 1, SR * int(DUR)) * np.exp(-np.linspace(0, 1, SR * int(DUR)) * 15)
     snare = noise.reshape(-1, 1) * 0.4
     sf.write(
         os.path.join(tmp, "snare.wav"),
@@ -281,9 +275,7 @@ def test_project_save_explicit_path(client: TestClient, tmp_path) -> None:
 
 
 def test_project_load_missing(client: TestClient, tmp_path) -> None:
-    resp = client.post(
-        "/api/project/load", json={"path": str(tmp_path / "nope.mmc.json")}
-    )
+    resp = client.post("/api/project/load", json={"path": str(tmp_path / "nope.mmc.json")})
     assert resp.status_code == 404
 
 

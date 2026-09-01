@@ -34,9 +34,7 @@ def test_render_dir() -> Generator[str, None, None]:
 
     # vocal with harsh sibilance (high-frequency tone at 6500 Hz + noise)
     rng = np.random.default_rng(123)
-    vocal = (
-        _tone(440) * 0.4 + _tone(6500) * 0.5 + rng.uniform(-0.1, 0.1, int(SR * DUR))
-    ).reshape(-1, 1)
+    vocal = (_tone(440) * 0.4 + _tone(6500) * 0.5 + rng.uniform(-0.1, 0.1, int(SR * DUR))).reshape(-1, 1)
     vocal = np.repeat(vocal, 2, axis=1)
     sf.write(os.path.join(tmp, "vocal.wav"), vocal, SR, subtype="PCM_16")
 
@@ -49,9 +47,7 @@ def test_true_peak_limiter_basic() -> None:
     audio = _tone(100, dur=1.0).reshape(-1, 1) * 2.0
     audio = np.repeat(audio, 2, axis=1)
 
-    cfg = LimiterConfig(
-        ceiling_dbtp=-1.0, lookahead_ms=10.0, release_ms=50.0, oversample=4
-    )
+    cfg = LimiterConfig(ceiling_dbtp=-1.0, lookahead_ms=10.0, release_ms=50.0, oversample=4)
     limited = apply_true_peak_limiter(audio, SR, cfg)
 
     assert limited.shape == audio.shape
@@ -151,8 +147,6 @@ def test_server_preview_mix_with_new_dsp(test_render_dir: str) -> None:
         max_duration=3.0,
         limiter_ceiling_db=-1.0,
         deesser_config={"enabled": True, "frequency_hz": 6500.0, "threshold_db": -18.0},
-        eq_bands=[
-            {"type": "bell", "freq": 500, "gain": 2.0, "q": 1.0, "enabled": True}
-        ],
+        eq_bands=[{"type": "bell", "freq": 500, "gain": 2.0, "q": 1.0, "enabled": True}],
     )
     assert os.path.exists(res["output_path"])

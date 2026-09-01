@@ -38,9 +38,7 @@ class RoleResult:
 def _band_rms(audio: np.ndarray, sr: int, fmin: float, fmax: float) -> float:
     """RMS energy of a frequency band in dBFS."""
     mono = audio.mean(axis=1) if audio.ndim > 1 else audio
-    sos = butter(
-        4, [max(fmin, 1.0), min(fmax, sr * 0.49)], btype="bandpass", fs=sr, output="sos"
-    )
+    sos = butter(4, [max(fmin, 1.0), min(fmax, sr * 0.49)], btype="bandpass", fs=sr, output="sos")
     filtered = sosfiltfilt(sos, mono)
     rms = float(np.sqrt(np.mean(filtered**2)) + 1e-12)
     return float(20 * np.log10(rms))
@@ -59,7 +57,6 @@ def _spectral_centroid(audio: np.ndarray, sr: int) -> float:
 def _spectral_flatness(audio: np.ndarray, sr: int) -> float:
     """Geometric mean / arithmetic mean of spectrum (0=tonal, 1=noise)."""
     mono = audio.mean(axis=1) if audio.ndim > 1 else audio
-    n = len(mono)
     fft = np.abs(np.fft.rfft(mono)) + 1e-12
     log_mean = float(np.mean(np.log(fft)))
     mean = float(np.mean(fft))
@@ -80,12 +77,7 @@ def _transient_density(audio: np.ndarray, sr: int) -> float:
     # Short-term RMS (5 ms)
     win = max(int(0.005 * sr), 1)
     n = len(mono)
-    rms = np.array(
-        [
-            np.sqrt(np.mean(mono[i : i + win] ** 2) + 1e-12)
-            for i in range(0, n - win, win)
-        ]
-    )
+    rms = np.array([np.sqrt(np.mean(mono[i : i + win] ** 2) + 1e-12) for i in range(0, n - win, win)])
     # Derivative
     diff = np.diff(rms, prepend=rms[0])
     threshold = float(np.percentile(np.abs(diff), 85))

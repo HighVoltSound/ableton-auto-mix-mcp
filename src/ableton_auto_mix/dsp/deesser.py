@@ -26,9 +26,7 @@ class DeEsserConfig:
     max_reduction_db: float = 12.0  # Maximum gain reduction cap (dB)
     attack_ms: float = 1.0  # Attack time (ms)
     release_ms: float = 45.0  # Release time (ms)
-    mode: Literal["split", "wide"] = (
-        "split"  # 'split' = reduce sibilants only; 'wide' = broadband
-    )
+    mode: Literal["split", "wide"] = "split"  # 'split' = reduce sibilants only; 'wide' = broadband
     enabled: bool = True
     mix: float = 1.0  # Dry/wet mix (0.0 to 1.0)
 
@@ -71,9 +69,7 @@ def apply_deesser(
     if f_lo >= f_hi:
         f_hi = min(nyquist * 0.95, f_lo + 500.0)
 
-    sos_detector = butter(
-        2, [f_lo / nyquist, f_hi / nyquist], btype="bandpass", output="sos"
-    )
+    sos_detector = butter(2, [f_lo / nyquist, f_hi / nyquist], btype="bandpass", output="sos")
     detected_band = sosfiltfilt(sos_detector, audio, axis=0)
 
     # Envelope follower on the filtered detection signal

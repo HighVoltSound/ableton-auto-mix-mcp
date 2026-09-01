@@ -92,9 +92,7 @@ def export_mp3(
     """Export as MP3 via ffmpeg (requires ffmpeg on PATH)."""
     ffmpeg = _find_ffmpeg()
     if ffmpeg is None:
-        raise RuntimeError(
-            "ffmpeg not found on PATH. Install ffmpeg to export MP3 files."
-        )
+        raise RuntimeError("ffmpeg not found on PATH. Install ffmpeg to export MP3 files.")
 
     os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
 

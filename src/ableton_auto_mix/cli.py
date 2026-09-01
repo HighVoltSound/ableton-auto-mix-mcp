@@ -23,9 +23,7 @@ from typing import Any
 
 from . import analyzer, mixer, preview, profiles, qa
 
-DEFAULT_RENDER_DIR = os.environ.get(
-    "ABLETON_RENDER_DIR", os.environ.get("ABLELON_RENDER_DIR", "renders")
-)
+DEFAULT_RENDER_DIR = os.environ.get("ABLETON_RENDER_DIR", os.environ.get("ABLELON_RENDER_DIR", "renders"))
 
 
 def _p(data: dict[str, Any] | list[Any]) -> None:
@@ -169,9 +167,7 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("preview", help="render a mastered preview mix WAV")
     p.add_argument("style")
     _add_render_args(p)
-    p.add_argument(
-        "--output", help="output WAV path (default <render_dir>/preview_<style>.wav)"
-    )
+    p.add_argument("--output", help="output WAV path (default <render_dir>/preview_<style>.wav)")
     p.add_argument("--max-duration", type=float, help="cap preview length in seconds")
     p.add_argument(
         "--manual-gain",
@@ -186,9 +182,7 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("conflicts", help="report tracks fighting for the same band")
     _add_render_args(p)
 
-    p = sub.add_parser(
-        "release", help="release-quality check (render preview if --output omitted)"
-    )
+    p = sub.add_parser("release", help="release-quality check (render preview if --output omitted)")
     p.add_argument("style", nargs="?")
     _add_render_args(p)
     p.add_argument("--output", help="check an existing WAV instead of rendering")

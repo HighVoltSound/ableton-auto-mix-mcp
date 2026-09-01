@@ -12,6 +12,19 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
+from .biquad import (
+    apply_biquad_sos,
+)
+from .biquad import (
+    high_shelf_biquad as _high_shelf_biquad,
+)
+from .biquad import (
+    low_shelf_biquad as _low_shelf_biquad,
+)
+from .biquad import (
+    peaking_biquad as _peaking_biquad,
+)
+
 
 @dataclass
 class EqNode:
@@ -32,20 +45,6 @@ class MidSideEqConfig:
     side_nodes: list[EqNode] = field(default_factory=list)
     enabled: bool = True
     mix: float = 1.0
-
-
-from .biquad import (
-    apply_biquad_sos,
-)
-from .biquad import (
-    high_shelf_biquad as _high_shelf_biquad,
-)
-from .biquad import (
-    low_shelf_biquad as _low_shelf_biquad,
-)
-from .biquad import (
-    peaking_biquad as _peaking_biquad,
-)
 
 
 def _apply_eq_chain(audio: np.ndarray, sr: int, nodes: list[EqNode]) -> np.ndarray:

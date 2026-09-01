@@ -23,9 +23,7 @@ def _clip_f0(f0: float, sr: int) -> float:
     return float(np.clip(f0, 20.0, sr * 0.45))
 
 
-def peaking_biquad(
-    sr: int, f0: float, gain_db: float, q: float = DEFAULT_PEAK_Q
-) -> tuple[np.ndarray, np.ndarray]:
+def peaking_biquad(sr: int, f0: float, gain_db: float, q: float = DEFAULT_PEAK_Q) -> tuple[np.ndarray, np.ndarray]:
     """RBJ peaking EQ biquad: +/- gain_db dB around f0 with quality q."""
     f0 = _clip_f0(f0, sr)
     A = 10 ** (gain_db / 40.0)
@@ -42,9 +40,7 @@ def peaking_biquad(
     return np.array([b0, b1, b2]) / a0, np.array([1.0, a1 / a0, a2 / a0])
 
 
-def low_shelf_biquad(
-    sr: int, f0: float, gain_db: float, q: float = DEFAULT_PEAK_Q
-) -> tuple[np.ndarray, np.ndarray]:
+def low_shelf_biquad(sr: int, f0: float, gain_db: float, q: float = DEFAULT_PEAK_Q) -> tuple[np.ndarray, np.ndarray]:
     """RBJ low-shelf biquad: raises/lowers everything below f0 by gain_db."""
     f0 = _clip_f0(f0, sr)
     A = 10 ** (gain_db / 40.0)
@@ -62,9 +58,7 @@ def low_shelf_biquad(
     return np.array([b0, b1, b2]) / a0, np.array([1.0, a1 / a0, a2 / a0])
 
 
-def high_shelf_biquad(
-    sr: int, f0: float, gain_db: float, q: float = DEFAULT_PEAK_Q
-) -> tuple[np.ndarray, np.ndarray]:
+def high_shelf_biquad(sr: int, f0: float, gain_db: float, q: float = DEFAULT_PEAK_Q) -> tuple[np.ndarray, np.ndarray]:
     """RBJ high-shelf biquad: raises/lowers everything above f0 by gain_db."""
     f0 = _clip_f0(f0, sr)
     A = 10 ** (gain_db / 40.0)

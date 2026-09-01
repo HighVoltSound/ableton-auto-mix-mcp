@@ -72,12 +72,8 @@ app.add_middleware(
 # ---------------------------------------------------------------------------
 
 # src/ableton_auto_mix/api_app.py -> project root is two levels up from this file's package dir
-_PROJECT_ROOT = os.path.dirname(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-)
-DEFAULT_RENDER_DIR = os.environ.get(
-    "ABLETON_RENDER_DIR", os.path.join(_PROJECT_ROOT, "renders")
-)
+_PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+DEFAULT_RENDER_DIR = os.environ.get("ABLETON_RENDER_DIR", os.path.join(_PROJECT_ROOT, "renders"))
 
 _allowed_roots: set[str] = set()
 
@@ -97,9 +93,7 @@ _register_dir(DEFAULT_RENDER_DIR)
 
 
 def _is_under(path_normcase: str, root_normcase: str) -> bool:
-    return path_normcase == root_normcase or path_normcase.startswith(
-        root_normcase.rstrip("\\/") + os.sep
-    )
+    return path_normcase == root_normcase or path_normcase.startswith(root_normcase.rstrip("\\/") + os.sep)
 
 
 def _resolve_audio_path(path: str, *, must_exist: bool = True) -> str:
@@ -131,8 +125,7 @@ class DirectoryRequest(BaseModel):
     pattern: str = Field(default="*.wav", description="Glob for the WAV files.")
     async_mode: bool = Field(
         default=False,
-        description="When true, returns a room_id immediately and streams "
-        "progress via WS /ws/progress/{room_id}.",
+        description="When true, returns a room_id immediately and streams progress via WS /ws/progress/{room_id}.",
     )
 
 
@@ -168,8 +161,7 @@ class PreviewRequest(BaseModel):
     )
     use_planner: bool = Field(
         default=False,
-        description="Render from a planner plan (mixing/mastering split); "
-        "response always includes 'plan'.",
+        description="Render from a planner plan (mixing/mastering split); response always includes 'plan'.",
     )
     multiband: dict | None = Field(
         default=None,
@@ -217,8 +209,7 @@ class PreviewRequest(BaseModel):
     )
     async_mode: bool = Field(
         default=False,
-        description="When true, returns a room_id immediately and streams "
-        "progress via WS /ws/progress/{room_id}.",
+        description="When true, returns a room_id immediately and streams progress via WS /ws/progress/{room_id}.",
     )
 
 
@@ -420,9 +411,7 @@ def api_preview(req: PreviewRequest) -> dict[str, Any]:
     _load_analyses(req.directory, req.pattern)  # fail fast on empty dirs
     if req.output_path is not None:
         if not req.output_path.lower().endswith(".wav"):
-            raise HTTPException(
-                status_code=400, detail="output_path must be a .wav file"
-            )
+            raise HTTPException(status_code=400, detail="output_path must be a .wav file")
         _register_dir(os.path.dirname(req.output_path))
     reference_abs: str | None = None
     if req.reference_path:
@@ -528,9 +517,7 @@ def api_reference_analyze(req: ReferenceAnalyzeRequest) -> dict[str, Any]:
 def api_reference_match(req: ReferenceMatchRequest) -> list[dict[str, Any]]:
     from .dsp.reference_matcher import compute_match_eq_curve
 
-    bands = compute_match_eq_curve(
-        req.current_envelope, req.target_envelope, strength=req.strength
-    )
+    bands = compute_match_eq_curve(req.current_envelope, req.target_envelope, strength=req.strength)
     return bands
 
 
@@ -570,9 +557,7 @@ def api_release(req: ReleaseRequest) -> dict[str, Any]:
         profile = _get_profile(req.style)
         _register_dir(req.directory)
         try:
-            rendered = preview.render_preview_mix(
-                req.directory, profile, pattern=req.pattern
-            )
+            rendered = preview.render_preview_mix(req.directory, profile, pattern=req.pattern)
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         check_path = rendered["output_path"]
@@ -615,16 +600,10 @@ def api_project_save(req: ProjectSaveRequest) -> dict[str, Any]:
     """Save project state to disk. Returns the saved file path."""
     try:
         state = project.ProjectState(
-            **{
-                k: v
-                for k, v in req.state.items()
-                if k in project.ProjectState.__dataclass_fields__
-            }
+            **{k: v for k, v in req.state.items() if k in project.ProjectState.__dataclass_fields__}
         )
     except (TypeError, KeyError) as exc:
-        raise HTTPException(
-            status_code=400, detail=f"invalid project state: {exc}"
-        ) from exc
+        raise HTTPException(status_code=400, detail=f"invalid project state: {exc}") from exc
 
     if req.path:
         saved_path = project.save_project(state, req.path)
@@ -652,9 +631,7 @@ def api_project_load(req: ProjectLoadRequest) -> dict[str, Any]:
     except FileNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except (ValueError, json.JSONDecodeError) as exc:
-        raise HTTPException(
-            status_code=400, detail=f"cannot parse project: {exc}"
-        ) from exc
+        raise HTTPException(status_code=400, detail=f"cannot parse project: {exc}") from exc
 
     if state.directory:
         _register_dir(state.directory)
@@ -694,9 +671,7 @@ class TrackCorrectionPayload(BaseModel):
 
 
 class ExportRequest(BaseModel):
-    corrections: list[TrackCorrectionPayload] = Field(
-        description="Per-track corrections from the mixer engine."
-    )
+    corrections: list[TrackCorrectionPayload] = Field(description="Per-track corrections from the mixer engine.")
     mode: Literal["live", "file"] = Field(
         default="file",
         description="'live' = push via AbletonOSC, 'file' = generate .als XML.",
@@ -708,8 +683,7 @@ class ExportRequest(BaseModel):
     tempo: float = Field(default=120.0, description="Session BPM for .als export.")
     async_mode: bool = Field(
         default=False,
-        description="When true, returns a room_id immediately and streams "
-        "progress via WS /ws/progress/{room_id}.",
+        description="When true, returns a room_id immediately and streams progress via WS /ws/progress/{room_id}.",
     )
 
 
@@ -725,9 +699,7 @@ class RecommendRequest(BaseModel):
 class BatchRequest(BaseModel):
     directories: list[str] = Field(description="List of render directories to process.")
     style: str = Field(description="Style name for all directories.")
-    output_dir: str | None = Field(
-        default=None, description="Where to save batch previews."
-    )
+    output_dir: str | None = Field(default=None, description="Where to save batch previews.")
     max_duration: float | None = None
     multiband: dict | None = None
     limiter_ceiling_db: float | None = None
@@ -770,9 +742,7 @@ class PresetLoadRequest(BaseModel):
 class ExportFormatRequest(BaseModel):
     input_path: str
     format: str = Field(default="wav", description="wav, flac, or mp3")
-    bit_depth: str = Field(
-        default="PCM_16", description="For WAV: PCM_16, PCM_24, PCM_32, FLOAT, DOUBLE"
-    )
+    bit_depth: str = Field(default="PCM_16", description="For WAV: PCM_16, PCM_24, PCM_32, FLOAT, DOUBLE")
     mp3_bitrate: str = Field(default="192k", description="For MP3: 128k, 192k, 320k")
     flac_compression: int = Field(default=5, description="For FLAC: 0-8")
 
@@ -867,17 +837,13 @@ def api_audio(
 ) -> FileResponse:
     """Stream a WAV as audio/wav (only from registered render directories)."""
     abs_path = _resolve_audio_path(path)
-    return FileResponse(
-        abs_path, media_type="audio/wav", filename=os.path.basename(abs_path)
-    )
+    return FileResponse(abs_path, media_type="audio/wav", filename=os.path.basename(abs_path))
 
 
 @app.get("/api/waveform")
 def api_waveform(
     path: str = Query(description="Absolute path to a whitelisted WAV file"),
-    points: int = Query(
-        default=600, ge=16, le=4096, description="Number of peak samples"
-    ),
+    points: int = Query(default=600, ge=16, le=4096, description="Number of peak samples"),
 ) -> dict[str, Any]:
     """Downsampled peak envelope of a WAV for waveform drawing."""
     abs_path = _resolve_audio_path(path)
@@ -1198,12 +1164,8 @@ def main() -> None:
         prog="python -m ableton_auto_mix.api_app",
         description="HTTP API for the ableton-auto-mix engine (desktop app backend).",
     )
-    parser.add_argument(
-        "--host", default="127.0.0.1", help="bind host (default 127.0.0.1)"
-    )
-    parser.add_argument(
-        "--port", type=int, default=8787, help="bind port (default 8787)"
-    )
+    parser.add_argument("--host", default="127.0.0.1", help="bind host (default 127.0.0.1)")
+    parser.add_argument("--port", type=int, default=8787, help="bind port (default 8787)")
     args = parser.parse_args()
 
     import uvicorn

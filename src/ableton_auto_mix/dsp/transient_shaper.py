@@ -37,7 +37,6 @@ def apply_transient_shaper(
         return audio
 
     input_arr = np.asarray(audio, dtype=np.float32)
-    orig_shape = input_arr.shape
 
     # Envelope detector coefficients
     # Fast attack (~2 ms), Slow sustain (~50 ms), Release (~80 ms)
@@ -87,9 +86,7 @@ def apply_transient_shaper(
         w_transient = transient_signal / total_env
         w_sustain = sustain_signal / total_env
 
-        gain_curve = (w_transient * attack_gain_linear) + (
-            w_sustain * sustain_gain_linear
-        )
+        gain_curve = (w_transient * attack_gain_linear) + (w_sustain * sustain_gain_linear)
         shaped = ch_data * gain_curve
 
         # Dry / Wet mix

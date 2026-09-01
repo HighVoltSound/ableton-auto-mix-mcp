@@ -81,10 +81,7 @@ def _apply_live(
         idx = corr.index
         if idx >= len(live_names):
             result.skipped += 1
-            result.errors.append(
-                f"Track index {idx} ({corr.name}) out of range "
-                f"(Ableton has {len(live_names)} tracks)"
-            )
+            result.errors.append(f"Track index {idx} ({corr.name}) out of range (Ableton has {len(live_names)} tracks)")
             continue
 
         try:
@@ -101,8 +98,7 @@ def _apply_live(
             # live export targets. EQ is handled via .als file export.
             if corr.band_corrections:
                 result.errors.append(
-                    f"EQ corrections for '{corr.name}' cannot be applied "
-                    f"live (use file export for EQ)"
+                    f"EQ corrections for '{corr.name}' cannot be applied live (use file export for EQ)"
                 )
                 result.skipped += len(corr.band_corrections)
 
@@ -248,7 +244,5 @@ def export_to_ableton(
         return _apply_json(corrections, session_path)
     else:
         result = ExportResult(mode=mode)
-        result.errors.append(
-            f"Unknown export mode: '{mode}' (expected 'live', 'file', or 'json')"
-        )
+        result.errors.append(f"Unknown export mode: '{mode}' (expected 'live', 'file', or 'json')")
         return result

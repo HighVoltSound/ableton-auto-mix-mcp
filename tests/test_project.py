@@ -64,7 +64,7 @@ def test_save_creates_parent_dirs(tmp_path):
 def test_load_nonexistent_raises(tmp_path):
     try:
         load_project(str(tmp_path / "nope.mmc.json"))
-        assert False, "should have raised"
+        raise AssertionError("should have raised")
     except FileNotFoundError:
         pass
 
@@ -112,7 +112,7 @@ def test_load_invalid_json(tmp_path):
         f.write("not json {{{")
     try:
         load_project(path)
-        assert False, "should have raised"
+        raise AssertionError("should have raised")
     except (ValueError, json.JSONDecodeError):
         pass
 

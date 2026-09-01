@@ -64,15 +64,11 @@ def test_spatializer_occiput_vs_front_spectral_filter() -> None:
     high_tone = _tone(8000.0, dur=1.0)
 
     # Position at Occiput (затылок, pos = 0.1)
-    cfg_back = SpatializerConfig(
-        enabled=True, head_position=0.1, azimuth_deg=0.0, distance_m=1.0, mix=1.0
-    )
+    cfg_back = SpatializerConfig(enabled=True, head_position=0.1, azimuth_deg=0.0, distance_m=1.0, mix=1.0)
     out_back = apply_binaural_spatializer(high_tone, SR, cfg_back)
 
     # Position at Front (перед лицом, pos = 0.9)
-    cfg_front = SpatializerConfig(
-        enabled=True, head_position=0.9, azimuth_deg=0.0, distance_m=1.0, mix=1.0
-    )
+    cfg_front = SpatializerConfig(enabled=True, head_position=0.9, azimuth_deg=0.0, distance_m=1.0, mix=1.0)
     out_front = apply_binaural_spatializer(high_tone, SR, cfg_front)
 
     rms_back = float(np.sqrt(np.mean(out_back**2)))

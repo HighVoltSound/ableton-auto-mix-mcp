@@ -56,9 +56,7 @@ class TestBuildSession:
 
     def test_volume_conversion(self) -> None:
         """0 dB -> ableton_vol ~0.871 (Ableton's unity)."""
-        corrections = [
-            {"name": "test", "volume_db": 0.0, "pan": 0.0, "band_corrections": []}
-        ]
+        corrections = [{"name": "test", "volume_db": 0.0, "pan": 0.0, "band_corrections": []}]
         xml = build_session(corrections)
         # The volume element should contain a float close to 0.871
         assert "0.871" in xml
@@ -103,18 +101,14 @@ class TestWriteAls:
 
     def test_creates_als_file(self, tmp_path) -> None:
         out = str(tmp_path / "test.als")
-        corrections = [
-            {"name": "kick", "volume_db": -3.0, "pan": 0.0, "band_corrections": []}
-        ]
+        corrections = [{"name": "kick", "volume_db": -3.0, "pan": 0.0, "band_corrections": []}]
         written = write_als(corrections, out)
         assert os.path.isfile(written)
         assert written.endswith(".als")
 
     def test_als_is_zip(self, tmp_path) -> None:
         out = str(tmp_path / "test.als")
-        write_als(
-            [{"name": "t", "volume_db": 0, "pan": 0, "band_corrections": []}], out
-        )
+        write_als([{"name": "t", "volume_db": 0, "pan": 0, "band_corrections": []}], out)
         with zipfile.ZipFile(out, "r") as zf:
             names = zf.namelist()
             assert len(names) == 1
@@ -122,9 +116,7 @@ class TestWriteAls:
 
     def test_xml_inside_zip(self, tmp_path) -> None:
         out = str(tmp_path / "test.als")
-        write_als(
-            [{"name": "x", "volume_db": 0, "pan": 0, "band_corrections": []}], out
-        )
+        write_als([{"name": "x", "volume_db": 0, "pan": 0, "band_corrections": []}], out)
         with zipfile.ZipFile(out, "r") as zf:
             content = zf.read(zf.namelist()[0]).decode("utf-8")
             assert "<Ableton" in content

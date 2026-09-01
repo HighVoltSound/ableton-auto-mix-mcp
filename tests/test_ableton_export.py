@@ -122,9 +122,7 @@ class TestExportResult:
     def test_to_dict(self) -> None:
         from ableton_auto_mix.ableton_export import ExportResult
 
-        r = ExportResult(
-            applied=3, skipped=1, errors=["test"], session_path="/a.als", mode="file"
-        )
+        r = ExportResult(applied=3, skipped=1, errors=["test"], session_path="/a.als", mode="file")
         d = r.to_dict()
         assert d["applied"] == 3
         assert d["skipped"] == 1

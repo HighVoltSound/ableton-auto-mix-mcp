@@ -44,9 +44,7 @@ def _make_render_dir(tmp: str) -> None:
     sf.write(os.path.join(tmp, "bass.wav"), bass, SR, subtype="PCM_16")
     # snare: noise burst
     rng = np.random.default_rng(7)
-    noise = rng.uniform(-1, 1, SR * int(DUR)) * np.exp(
-        -np.linspace(0, 1, SR * int(DUR)) * 15
-    )
+    noise = rng.uniform(-1, 1, SR * int(DUR)) * np.exp(-np.linspace(0, 1, SR * int(DUR)) * 15)
     snare = noise.reshape(-1, 1) * 0.4
     snare = np.repeat(snare, 2, axis=1)
     sf.write(os.path.join(tmp, "snare.wav"), snare, SR, subtype="PCM_16")
@@ -138,9 +136,7 @@ def test_space_fx() -> None:
     # Sliding max matches a hand-rolled trailing window max.
     m = np.abs(rng.uniform(-1, 1, (37, 2)))
     for w in (1, 5, 40):
-        ref = np.stack(
-            [np.maximum.reduce(m[max(0, i - w + 1) : i + 1], axis=0) for i in range(37)]
-        )
+        ref = np.stack([np.maximum.reduce(m[max(0, i - w + 1) : i + 1], axis=0) for i in range(37)])
         assert np.allclose(_sliding_max(m, w), ref), w
 
     # Moving average is linear-in-N and smooths an impulse.
@@ -159,9 +155,7 @@ def test_compressor() -> None:
     x = rng.uniform(-0.5, 0.5, (SR, 2))
     x[: int(0.05 * SR)] = 0.95  # a loud burst up front
     peak_in = float(np.max(np.abs(x)))
-    comp = _compressor(
-        x, SR, threshold_db=-10.0, ratio=4.0, attack_ms=3.0, release_ms=80.0
-    )
+    comp = _compressor(x, SR, threshold_db=-10.0, ratio=4.0, attack_ms=3.0, release_ms=80.0)
     assert comp.shape == x.shape
     assert np.all(np.isfinite(comp))
     # Loud part is tamed.

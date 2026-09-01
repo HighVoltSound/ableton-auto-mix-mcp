@@ -39,9 +39,7 @@ mcp = MCPServer("ableton-auto-mix-mcp")
 
 # "ABLETON_RENDER_DIR" is the canonical env var; the old misspelled name is
 # still honored for backwards compatibility.
-DEFAULT_RENDER_DIR = os.environ.get(
-    "ABLETON_RENDER_DIR", os.environ.get("ABLELON_RENDER_DIR", "renders")
-)
+DEFAULT_RENDER_DIR = os.environ.get("ABLETON_RENDER_DIR", os.environ.get("ABLELON_RENDER_DIR", "renders"))
 
 
 # ---------------------------------------------------------------------------
@@ -71,9 +69,7 @@ def list_styles() -> list[dict[str, Any]]:
 def get_style(
     style: Annotated[
         str,
-        Field(
-            description="Style name, e.g. 'techno', 'breaks', 'hip_hop'. See list_styles."
-        ),
+        Field(description="Style name, e.g. 'techno', 'breaks', 'hip_hop'. See list_styles."),
     ],
 ) -> dict[str, Any]:
     """Get the full profile for a style, including spectral curve, track
@@ -112,9 +108,7 @@ def get_ableton_status() -> dict[str, Any]:
 def analyze_audio(
     path: Annotated[
         str,
-        Field(
-            description="Path to a rendered WAV file (absolute or relative to the working directory)."
-        ),
+        Field(description="Path to a rendered WAV file (absolute or relative to the working directory)."),
     ],
 ) -> dict[str, Any]:
     """Analyze a rendered WAV file into mix metrics: loudness (LUFS/LRA),
@@ -149,9 +143,7 @@ def analyze_render_dir(
     ] = DEFAULT_RENDER_DIR,
     pattern: Annotated[
         str,
-        Field(
-            description="Glob pattern matching the WAV files inside directory. Default '*.wav'."
-        ),
+        Field(description="Glob pattern matching the WAV files inside directory. Default '*.wav'."),
     ] = "*.wav",
 ) -> list[dict[str, Any]]:
     """Analyze every WAV in a directory of rendered tracks. Point this at the
@@ -181,16 +173,11 @@ def analyze_render_dir(
 def detect_track_roles(
     directory: Annotated[
         str,
-        Field(
-            description="Folder containing one WAV per track. "
-            "Defaults to the renders/ directory."
-        ),
+        Field(description="Folder containing one WAV per track. Defaults to the renders/ directory."),
     ] = DEFAULT_RENDER_DIR,
     pattern: Annotated[
         str,
-        Field(
-            description="Glob pattern matching the WAV files inside directory. Default '*.wav'."
-        ),
+        Field(description="Glob pattern matching the WAV files inside directory. Default '*.wav'."),
     ] = "*.wav",
 ) -> list[dict[str, Any]]:
     """Automatically detect musical instrument roles for all audio tracks in a directory.
@@ -226,10 +213,7 @@ def detect_track_roles(
 def recommend_mix(
     directory: Annotated[
         str,
-        Field(
-            description="Folder containing one WAV per track. "
-            "Defaults to the renders/ directory."
-        ),
+        Field(description="Folder containing one WAV per track. Defaults to the renders/ directory."),
     ] = DEFAULT_RENDER_DIR,
     style: Annotated[
         str | None,
@@ -266,9 +250,7 @@ def recommend_mix(
             audio = np.stack([audio, audio], axis=1)
         elif audio.shape[1] > 2:
             audio = audio[:, :2]
-        role_res = auto_role.detect_role(
-            np.asarray(audio, dtype=np.float64), sr, a.name
-        )
+        role_res = auto_role.detect_role(np.asarray(audio, dtype=np.float64), sr, a.name)
         t["role"] = role_res.role
         t["role_confidence"] = role_res.confidence
         tracks.append(t)
@@ -302,12 +284,8 @@ def recommend_mix(
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True))
 def match_eq_reference(
     target_path: Annotated[str, Field(description="Path to your mix or preview WAV.")],
-    reference_path: Annotated[
-        str, Field(description="Path to the reference WAV track to match.")
-    ],
-    n_bands: Annotated[
-        int, Field(description="Number of EQ bands to calculate (default 8).")
-    ] = 8,
+    reference_path: Annotated[str, Field(description="Path to the reference WAV track to match.")],
+    n_bands: Annotated[int, Field(description="Number of EQ bands to calculate (default 8).")] = 8,
 ) -> dict[str, Any]:
     """Calculate Match-EQ correction curve by comparing the spectrum of a mix against a reference track.
 
@@ -321,9 +299,7 @@ def match_eq_reference(
 
     mix_audio, mix_sr = reference.load_audio_stereo(target_path)
     ref_audio, ref_sr = reference.load_audio_stereo(reference_path)
-    curve_bands = reference.compute_match_curve(
-        mix_sr, mix_audio, ref_sr, ref_audio, n_bands=n_bands
-    )
+    curve_bands = reference.compute_match_curve(mix_sr, mix_audio, ref_sr, ref_audio, n_bands=n_bands)
     return {
         "bands": curve_bands,
         "n_bands": len(curve_bands),
@@ -341,9 +317,7 @@ def suggest_style(
     ] = DEFAULT_RENDER_DIR,
     pattern: Annotated[
         str,
-        Field(
-            description="Glob pattern matching the WAV files inside render_dir. Default '*.wav'."
-        ),
+        Field(description="Glob pattern matching the WAV files inside render_dir. Default '*.wav'."),
     ] = "*.wav",
 ) -> dict[str, Any]:
     """Analyze the rendered tracks and suggest which style profile fits best.
@@ -369,9 +343,7 @@ def analyze_conflicts(
     ] = DEFAULT_RENDER_DIR,
     pattern: Annotated[
         str,
-        Field(
-            description="Glob pattern matching the WAV files inside render_dir. Default '*.wav'."
-        ),
+        Field(description="Glob pattern matching the WAV files inside render_dir. Default '*.wav'."),
     ] = "*.wav",
 ) -> dict[str, Any]:
     """Analyze rendered tracks and report which pairs are fighting for the
@@ -404,9 +376,7 @@ def analyze_conflicts(
 def auto_mix(
     style: Annotated[
         str,
-        Field(
-            description="Style name, e.g. 'techno', 'breaks', 'hip_hop'. See list_styles."
-        ),
+        Field(description="Style name, e.g. 'techno', 'breaks', 'hip_hop'. See list_styles."),
     ],
     render_dir: Annotated[
         str,
@@ -425,9 +395,7 @@ def auto_mix(
     ] = True,
     pattern: Annotated[
         str,
-        Field(
-            description="Glob pattern matching the WAV files inside render_dir. Default '*.wav'."
-        ),
+        Field(description="Glob pattern matching the WAV files inside render_dir. Default '*.wav'."),
     ] = "*.wav",
 ) -> dict[str, Any]:
     """Auto-mix rendered tracks toward a musical style.
@@ -478,57 +446,38 @@ def auto_mix(
     )
 )
 def preview_mix(
-    style: Annotated[
-        str, Field(description="Style name, e.g. 'techno', 'breaks'. See list_styles.")
-    ],
+    style: Annotated[str, Field(description="Style name, e.g. 'techno', 'breaks'. See list_styles.")],
     render_dir: Annotated[
         str,
-        Field(
-            description="Folder containing one WAV per track. "
-            "Defaults to the renders/ directory."
-        ),
+        Field(description="Folder containing one WAV per track. Defaults to the renders/ directory."),
     ] = DEFAULT_RENDER_DIR,
     pattern: Annotated[
         str,
-        Field(
-            description="Glob pattern matching the WAV files inside render_dir. Default '*.wav'."
-        ),
+        Field(description="Glob pattern matching the WAV files inside render_dir. Default '*.wav'."),
     ] = "*.wav",
     output_path: Annotated[
         str | None,
-        Field(
-            description="Where to write the preview WAV. Defaults to <render_dir>/preview_<style>.wav."
-        ),
+        Field(description="Where to write the preview WAV. Defaults to <render_dir>/preview_<style>.wav."),
     ] = None,
     max_duration: Annotated[
         float | None,
-        Field(
-            description="Cap the preview length in seconds. If None, trimmed to shortest track."
-        ),
+        Field(description="Cap the preview length in seconds. If None, trimmed to shortest track."),
     ] = None,
     manual_gain: Annotated[
         dict[str, float] | None,
-        Field(
-            description="Extra per-file volume in dB, keyed by filename without extension, e.g. {'snt2': -4.0}."
-        ),
+        Field(description="Extra per-file volume in dB, keyed by filename without extension, e.g. {'snt2': -4.0}."),
     ] = None,
     sidechain_db: Annotated[
         float | None,
-        Field(
-            description="Duck all non-snare tracks by this many dB when snare hits. None disables."
-        ),
+        Field(description="Duck all non-snare tracks by this many dB when snare hits. None disables."),
     ] = None,
     reference_path: Annotated[
         str | None,
-        Field(
-            description="Optional path to reference WAV for Match-EQ during mastering preview."
-        ),
+        Field(description="Optional path to reference WAV for Match-EQ during mastering preview."),
     ] = None,
     multiband_config: Annotated[
         dict[str, Any] | None,
-        Field(
-            description="Optional multiband compressor parameters: {bands: [...], mix: 1.0}."
-        ),
+        Field(description="Optional multiband compressor parameters: {bands: [...], mix: 1.0}."),
     ] = None,
     limiter_ceiling_db: Annotated[
         float | None,
@@ -540,21 +489,15 @@ def preview_mix(
     ] = None,
     midside_eq_config: Annotated[
         dict[str, Any] | None,
-        Field(
-            description="Optional Mid/Side EQ parameters: {mid_bands: [...], side_bands: [...]}."
-        ),
+        Field(description="Optional Mid/Side EQ parameters: {mid_bands: [...], side_bands: [...]}."),
     ] = None,
     transient_config: Annotated[
         dict[str, Any] | None,
-        Field(
-            description="Optional Transient Shaper parameters: {attack_gain_db: 0, sustain_gain_db: 0}."
-        ),
+        Field(description="Optional Transient Shaper parameters: {attack_gain_db: 0, sustain_gain_db: 0}."),
     ] = None,
     sidechain_config: Annotated[
         dict[str, Any] | None,
-        Field(
-            description="Advanced sidechain configuration: {trigger_role: 'kick', duck_roles: ['bass'], ...}."
-        ),
+        Field(description="Advanced sidechain configuration: {trigger_role: 'kick', duck_roles: ['bass'], ...}."),
     ] = None,
     deesser_config: Annotated[
         dict[str, Any] | None,
@@ -564,15 +507,11 @@ def preview_mix(
     ] = None,
     eq_bands: Annotated[
         list[dict[str, Any]] | None,
-        Field(
-            description="Master EQ bands: [{type: 'bell', freq: 1000, gain: 2.0, q: 1.0, enabled: true}]"
-        ),
+        Field(description="Master EQ bands: [{type: 'bell', freq: 1000, gain: 2.0, q: 1.0, enabled: true}]"),
     ] = None,
     spatial_configs: Annotated[
         dict[str, Any] | None,
-        Field(
-            description="Per-track 3D Head Spatializer configs: {track_stem: {head_position: 0.3, azimuth_deg: 30}}"
-        ),
+        Field(description="Per-track 3D Head Spatializer configs: {track_stem: {head_position: 0.3, azimuth_deg: 30}}"),
     ] = None,
 ) -> dict[str, Any]:
     """Apply style corrections and DSP processing to rendered WAVs and bounce a stereo preview mix.
@@ -616,15 +555,9 @@ def compare_styles_ab(
         str,
         Field(description="Directory containing track WAVs."),
     ] = DEFAULT_RENDER_DIR,
-    pattern: Annotated[
-        str, Field(description="Glob pattern for audio files.")
-    ] = "*.wav",
-    max_duration: Annotated[
-        float | None, Field(description="Cap duration in seconds.")
-    ] = None,
-    limiter_ceiling_db: Annotated[
-        float, Field(description="Master limiter ceiling.")
-    ] = -0.3,
+    pattern: Annotated[str, Field(description="Glob pattern for audio files.")] = "*.wav",
+    max_duration: Annotated[float | None, Field(description="Cap duration in seconds.")] = None,
+    limiter_ceiling_db: Annotated[float, Field(description="Master limiter ceiling.")] = -0.3,
 ) -> dict[str, Any]:
     """Render identical track stems against two different style profiles for immediate A/B audio comparison.
 
@@ -659,26 +592,20 @@ def compare_styles_ab(
     )
 )
 def export_to_ableton(
-    style: Annotated[
-        str, Field(description="Target style profile to calculate corrections from.")
-    ],
+    style: Annotated[str, Field(description="Target style profile to calculate corrections from.")],
     render_dir: Annotated[
         str,
         Field(description="Directory containing the WAV stems."),
     ] = DEFAULT_RENDER_DIR,
     mode: Annotated[
         str,
-        Field(
-            description="Export mode: 'file' generates an Ableton .als project file, 'live' sends via AbletonOSC."
-        ),
+        Field(description="Export mode: 'file' generates an Ableton .als project file, 'live' sends via AbletonOSC."),
     ] = "file",
     session_path: Annotated[
         str | None,
         Field(description="Destination path for .als file or existing session path."),
     ] = None,
-    tempo: Annotated[
-        float, Field(description="Project tempo in BPM (default 120.0).")
-    ] = 120.0,
+    tempo: Annotated[float, Field(description="Project tempo in BPM (default 120.0).")] = 120.0,
     pattern: Annotated[str, Field(description="Glob pattern for WAV files.")] = "*.wav",
 ) -> dict[str, Any]:
     """Export calculated mix corrections directly into an Ableton Live .als project or via AbletonOSC.
@@ -717,24 +644,12 @@ def list_mix_presets() -> list[dict[str, Any]]:
 def save_mix_preset(
     name: Annotated[str, Field(description="Unique name for the preset.")],
     style: Annotated[str, Field(description="Associated style name (e.g. 'techno').")],
-    multiband: Annotated[
-        dict[str, Any] | None, Field(description="Multiband compressor config.")
-    ] = None,
-    limiter_ceiling_db: Annotated[
-        float, Field(description="Limiter ceiling dB.")
-    ] = -0.3,
-    dynamic_eq: Annotated[
-        dict[str, Any] | None, Field(description="Dynamic EQ config.")
-    ] = None,
-    midside_eq: Annotated[
-        dict[str, Any] | None, Field(description="Mid/Side EQ config.")
-    ] = None,
-    transient: Annotated[
-        dict[str, Any] | None, Field(description="Transient Shaper config.")
-    ] = None,
-    sidechain: Annotated[
-        dict[str, Any] | None, Field(description="Sidechain config.")
-    ] = None,
+    multiband: Annotated[dict[str, Any] | None, Field(description="Multiband compressor config.")] = None,
+    limiter_ceiling_db: Annotated[float, Field(description="Limiter ceiling dB.")] = -0.3,
+    dynamic_eq: Annotated[dict[str, Any] | None, Field(description="Dynamic EQ config.")] = None,
+    midside_eq: Annotated[dict[str, Any] | None, Field(description="Mid/Side EQ config.")] = None,
+    transient: Annotated[dict[str, Any] | None, Field(description="Transient Shaper config.")] = None,
+    sidechain: Annotated[dict[str, Any] | None, Field(description="Sidechain config.")] = None,
     notes: Annotated[str, Field(description="User notes / description.")] = "",
 ) -> dict[str, Any]:
     """Save the current DSP chain and mixing parameters as a reusable preset."""
@@ -797,21 +712,11 @@ def delete_mix_preset(
 )
 def export_audio_format(
     input_path: Annotated[str, Field(description="Path to source WAV preview file.")],
-    format: Annotated[
-        str, Field(description="Target audio format: 'wav', 'flac', or 'mp3'.")
-    ] = "flac",
-    bit_depth: Annotated[
-        int | None, Field(description="Target bit depth for WAV/FLAC (16, 24, 32).")
-    ] = None,
-    mp3_bitrate: Annotated[
-        int | None, Field(description="Target MP3 bitrate in kbps (e.g. 320, 256).")
-    ] = None,
-    flac_compression: Annotated[
-        int, Field(description="FLAC compression level (0-8).")
-    ] = 5,
-    output_path: Annotated[
-        str | None, Field(description="Optional custom destination path.")
-    ] = None,
+    format: Annotated[str, Field(description="Target audio format: 'wav', 'flac', or 'mp3'.")] = "flac",
+    bit_depth: Annotated[int | None, Field(description="Target bit depth for WAV/FLAC (16, 24, 32).")] = None,
+    mp3_bitrate: Annotated[int | None, Field(description="Target MP3 bitrate in kbps (e.g. 320, 256).")] = None,
+    flac_compression: Annotated[int, Field(description="FLAC compression level (0-8).")] = 5,
+    output_path: Annotated[str | None, Field(description="Optional custom destination path.")] = None,
 ) -> dict[str, Any]:
     """Convert and export a mix master WAV to standard distribution formats (WAV/FLAC/MP3)."""
     if not os.path.exists(input_path):
@@ -849,21 +754,11 @@ def export_audio_format(
     )
 )
 def batch_process_dirs(
-    directories: Annotated[
-        list[str], Field(description="List of folder paths containing stems to mix.")
-    ],
-    style: Annotated[
-        str, Field(description="Style profile to apply across all directories.")
-    ],
-    output_dir: Annotated[
-        str | None, Field(description="Optional folder to collect all output previews.")
-    ] = None,
-    max_duration: Annotated[
-        float | None, Field(description="Optional max preview duration in seconds.")
-    ] = None,
-    limiter_ceiling_db: Annotated[
-        float, Field(description="Master limiter ceiling.")
-    ] = -0.3,
+    directories: Annotated[list[str], Field(description="List of folder paths containing stems to mix.")],
+    style: Annotated[str, Field(description="Style profile to apply across all directories.")],
+    output_dir: Annotated[str | None, Field(description="Optional folder to collect all output previews.")] = None,
+    max_duration: Annotated[float | None, Field(description="Optional max preview duration in seconds.")] = None,
+    limiter_ceiling_db: Annotated[float, Field(description="Master limiter ceiling.")] = -0.3,
 ) -> dict[str, Any]:
     """Batch process multiple multi-track session folders under a consistent style profile."""
     res = batch.run_batch(
@@ -914,9 +809,7 @@ def release_check(
     ] = None,
     pattern: Annotated[
         str,
-        Field(
-            description="Glob pattern matching the WAV files inside render_dir. Default '*.wav'."
-        ),
+        Field(description="Glob pattern matching the WAV files inside render_dir. Default '*.wav'."),
     ] = "*.wav",
     output_path: Annotated[
         str | None,
@@ -934,9 +827,7 @@ def release_check(
     """
     if output_path is None:
         if style is None:
-            raise ValueError(
-                "provide style (to render a preview) or output_path (an existing WAV)"
-            )
+            raise ValueError("provide style (to render a preview) or output_path (an existing WAV)")
         profile = profiles.get_profile(style)
         result = preview.render_preview_mix(
             render_dir,

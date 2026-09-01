@@ -131,9 +131,7 @@ def test_preview_mix_and_dsp(render_dir: str) -> None:
         max_duration=3.0,
         multiband_config={"mix": 0.8},
         limiter_ceiling_db=-0.5,
-        dynamic_eq_config={
-            "bands": [{"freq": 100, "threshold_db": -12, "ratio": 2.0, "gain_db": -3.0}]
-        },
+        dynamic_eq_config={"bands": [{"freq": 100, "threshold_db": -12, "ratio": 2.0, "gain_db": -3.0}]},
         midside_eq_config={"mid_bands": [], "side_bands": []},
         transient_config={"attack_gain_db": 1.0, "sustain_gain_db": -1.0},
     )

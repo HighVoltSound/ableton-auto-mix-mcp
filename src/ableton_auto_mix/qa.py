@@ -94,9 +94,7 @@ def _conflict_suggestion(role_a: str, role_b: str, band: str) -> str:
     if band == "mids" or band == "high_mids":
         return "mid presence conflict: spread with panning or cut the other track's mids by 2-3 dB"
     if band == "highs":
-        return (
-            "top-end conflict: roll off highs on one track or widen it for separation"
-        )
+        return "top-end conflict: roll off highs on one track or widen it for separation"
     if role_a == "vocals" or role_b == "vocals":
         return "vocals buried here: carve this band out of the competing instrument"
     return "shared band energy; reduce one via EQ or ducking"
@@ -175,9 +173,7 @@ def _release_notes(results: list[dict[str, Any]]) -> list[str]:
     for r in results:
         if r["status"] == "needs_work":
             lo, hi = r["ok_range"]
-            notes.append(
-                f"{r['metric']}: {r['measured']} (target ~{r['target']}, ok {lo}..{hi})"
-            )
+            notes.append(f"{r['metric']}: {r['measured']} (target ~{r['target']}, ok {lo}..{hi})")
     if not notes:
         notes.append("all metrics within label-style range")
     return notes

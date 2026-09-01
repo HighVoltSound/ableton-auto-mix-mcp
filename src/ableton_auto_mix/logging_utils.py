@@ -5,8 +5,9 @@ from __future__ import annotations
 import logging
 import os
 import time
+from collections.abc import Callable
 from functools import wraps
-from typing import Any, Callable
+from typing import Any
 
 LOG_FORMAT = "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
 LOG_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
@@ -84,9 +85,7 @@ def timed(func: Callable) -> Callable:
     return wrapper  # type: ignore[return-value]
 
 
-def log_call(
-    logger: logging.Logger | None = None, level: int = logging.DEBUG
-) -> Callable:
+def log_call(logger: logging.Logger | None = None, level: int = logging.DEBUG) -> Callable:
     """Decorator that logs function entry/exit with args summary.
 
     Usage:
@@ -104,7 +103,7 @@ def log_call(
             for a in args[:3]:  # first 3 positional
                 if hasattr(a, "shape"):
                     arg_summary.append(f"ndarray{a.shape}")
-                elif isinstance(a, (list, tuple)) and len(a) > 5:
+                elif isinstance(a, list | tuple) and len(a) > 5:
                     arg_summary.append(f"{type(a).__name__}({len(a)} items)")
                 else:
                     arg_summary.append(repr(a)[:80])
@@ -113,10 +112,8 @@ def log_call(
             try:
                 result = func(*args, **kwargs)
                 if hasattr(result, "shape"):
-                    _logger.log(
-                        level, "← %s → ndarray%s", func.__qualname__, result.shape
-                    )
-                elif isinstance(result, (list, tuple)) and len(result) > 5:
+                    _logger.log(level, "← %s → ndarray%s", func.__qualname__, result.shape)
+                elif isinstance(result, list | tuple) and len(result) > 5:
                     _logger.log(
                         level,
                         "← %s → %s(%d items)",
@@ -125,14 +122,10 @@ def log_call(
                         len(result),
                     )
                 else:
-                    _logger.log(
-                        level, "← %s → %s", func.__qualname__, repr(result)[:80]
-                    )
+                    _logger.log(level, "← %s → %s", func.__qualname__, repr(result)[:80])
                 return result
             except Exception as exc:
-                _logger.error(
-                    "✗ %s raised %s: %s", func.__qualname__, type(exc).__name__, exc
-                )
+                _logger.error("✗ %s raised %s: %s", func.__qualname__, type(exc).__name__, exc)
                 raise
 
         return wrapper  # type: ignore[return-value]

@@ -54,14 +54,10 @@ def _analyze_mix_balance(tracks: list[dict]) -> dict:
     return avg_bands
 
 
-def _suggest_gain(
-    tracks: list[dict], target_lufs: float = -14.0
-) -> list[Recommendation]:
+def _suggest_gain(tracks: list[dict], target_lufs: float = -14.0) -> list[Recommendation]:
     """Suggest per-track gain adjustments to hit the target LUFS."""
     recs = []
-    current_lufs = [
-        t.get("lufs", -14.0) for t in tracks if isinstance(t.get("lufs"), (int, float))
-    ]
+    current_lufs = [t.get("lufs", -14.0) for t in tracks if isinstance(t.get("lufs"), int | float)]
     if not current_lufs:
         return recs
 
@@ -209,7 +205,7 @@ def _retrieve_references(
         features = {
             "lufs": t.get("lufs", -14.0),
             "crest_factor": (t.get("peak_db", -6) - t.get("rms_db", -20))
-            if isinstance(t.get("rms_db"), (int, float))
+            if isinstance(t.get("rms_db"), int | float)
             else 12.0,
             "band_energy": t.get("band_energy", {}),
         }
@@ -245,11 +241,7 @@ def _suggest_compression_rag(
         role = role_map.get(name, "unknown")
         rms = t.get("rms_db", -30)
         peak = t.get("peak_db", -6)
-        crest = (
-            peak - rms
-            if isinstance(rms, (int, float)) and isinstance(peak, (int, float))
-            else 0
-        )
+        crest = peak - rms if isinstance(rms, int | float) and isinstance(peak, int | float) else 0
 
         refs = refs_by_track.get(name, [])
         # Find compression references for this role
@@ -292,8 +284,7 @@ def _suggest_compression_rag(
                         "attack_ms": 5,
                         "release_ms": 100,
                     },
-                    reason=f"{role} has high dynamics (crest {crest:.0f} dB). "
-                    f"Compression at -12 dB / 3:1 tames peaks.",
+                    reason=f"{role} has high dynamics (crest {crest:.0f} dB). Compression at -12 dB / 3:1 tames peaks.",
                     confidence=0.7,
                 )
             )
@@ -309,9 +300,7 @@ def _suggest_sidechain_rag(
     """Suggest sidechain using RAG references."""
     recs = []
     has_kick = any(role_map.get(t.get("name", ""), "") == "kick" for t in tracks)
-    has_bass = any(
-        role_map.get(t.get("name", ""), "") in ("bass", "sub_bass") for t in tracks
-    )
+    has_bass = any(role_map.get(t.get("name", ""), "") in ("bass", "sub_bass") for t in tracks)
 
     if has_kick and has_bass:
         # Find sidechain references from bass tracks
@@ -319,9 +308,7 @@ def _suggest_sidechain_rag(
         for t in tracks:
             name = t.get("name", t.get("file", ""))
             if role_map.get(name, "") in ("bass", "sub_bass"):
-                bass_refs.extend(
-                    [r for r in refs_by_track.get(name, []) if r.get("sidechain")]
-                )
+                bass_refs.extend([r for r in refs_by_track.get(name, []) if r.get("sidechain")])
 
         if bass_refs:
             best_sc = bass_refs[0]["sidechain"]
@@ -401,10 +388,7 @@ def recommend(
     # Summary
     cats = set(r.category for r in all_recs)
     rag_count = sum(1 for r in all_recs if r.references)
-    summary = (
-        f"Found {len(all_recs)} suggestions across {len(cats)} categories "
-        f"({rag_count} backed by RAG references)."
-    )
+    summary = f"Found {len(all_recs)} suggestions across {len(cats)} categories ({rag_count} backed by RAG references)."
 
     return Recommendations(
         recommendations=all_recs,

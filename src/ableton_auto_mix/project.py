@@ -87,9 +87,7 @@ def load_project(path: str) -> ProjectState:
     if not isinstance(raw, dict):
         raise ValueError(f"Invalid project file format: {abs_path}")
     raw = _migrate_v02(raw)
-    return ProjectState(
-        **{k: v for k, v in raw.items() if k in ProjectState.__dataclass_fields__}
-    )
+    return ProjectState(**{k: v for k, v in raw.items() if k in ProjectState.__dataclass_fields__})
 
 
 def auto_save(state: ProjectState, directory: str) -> str:
@@ -98,9 +96,7 @@ def auto_save(state: ProjectState, directory: str) -> str:
     return save_project(state, path)
 
 
-def list_recent_projects(
-    max_count: int = 10, extra_dirs: list[str] | None = None
-) -> list[dict[str, Any]]:
+def list_recent_projects(max_count: int = 10, extra_dirs: list[str] | None = None) -> list[dict[str, Any]]:
     """Scan common locations for .musicmixcode.json files, return recent first."""
     candidates: list[Path] = []
 
@@ -130,9 +126,7 @@ def list_recent_projects(
                 pass
 
     # Scan project renders directory (if it exists)
-    project_root = Path(
-        os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    )
+    project_root = Path(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
     renders = project_root / "renders"
     if renders.is_dir():
         try:

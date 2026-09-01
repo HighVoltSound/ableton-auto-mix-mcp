@@ -14,8 +14,8 @@ import numpy as np
 import pyloudnorm as pyln
 import soundfile as sf
 
-from ableton_auto_mix.profiles import StyleProfile, load_profile
 from ableton_auto_mix.preview import PreviewOptions, render_preview_mix
+from ableton_auto_mix.profiles import StyleProfile, load_profile
 
 SR = 44100
 DUR = 4.0  # seconds — long enough for pyloudnorm (needs >= 3s)
@@ -108,7 +108,7 @@ class TestBasicRender:
         out = str(tmp_path / "preview.wav")
         profile = _get_profile()
 
-        result = render_preview_mix(
+        render_preview_mix(
             render_dir=render_dir,
             profile=profile,
             output_path=out,
@@ -137,9 +137,7 @@ class TestBasicRender:
         render_preview_mix(render_dir=render_dir, profile=profile, output_path=out)
 
         metrics = _measure_wav(out)
-        assert (
-            metrics["true_peak"] <= 1.0
-        ), f"Clipping detected: peak={metrics['true_peak']:.4f}"
+        assert metrics["true_peak"] <= 1.0, f"Clipping detected: peak={metrics['true_peak']:.4f}"
 
 
 # ---------------------------------------------------------------------------
@@ -164,20 +162,16 @@ class TestStyleProfiles:
         techno = _get_profile("techno")
         ambient = _get_profile("ambient")
 
-        render_preview_mix(
-            render_dir=render_dir_techno, profile=techno, output_path=out_techno
-        )
-        render_preview_mix(
-            render_dir=render_dir_ambient, profile=ambient, output_path=out_ambient
-        )
+        render_preview_mix(render_dir=render_dir_techno, profile=techno, output_path=out_techno)
+        render_preview_mix(render_dir=render_dir_ambient, profile=ambient, output_path=out_ambient)
 
         m_techno = _measure_wav(out_techno)
         m_ambient = _measure_wav(out_ambient)
 
         # Techno target is louder than ambient target
-        assert (
-            techno.target_lufs > ambient.target_lufs
-        ), f"Techno ({techno.target_lufs}) should be louder than ambient ({ambient.target_lufs})"
+        assert techno.target_lufs > ambient.target_lufs, (
+            f"Techno ({techno.target_lufs}) should be louder than ambient ({ambient.target_lufs})"
+        )
 
         # Both should produce finite loudness
         assert np.isfinite(m_techno["loudness_lufs"])
@@ -204,9 +198,7 @@ class TestSidechain:
         out_sc = str(tmp_path / "sidechain.wav")
         profile = _get_profile()
 
-        render_preview_mix(
-            render_dir=render_dir, profile=profile, output_path=out_no_sc
-        )
+        render_preview_mix(render_dir=render_dir, profile=profile, output_path=out_no_sc)
         render_preview_mix(
             render_dir=render_dir,
             profile=profile,
@@ -248,9 +240,7 @@ class TestMaxDuration:
 
         audio, sr = sf.read(out, dtype="float64")
         duration = len(audio) / sr
-        assert (
-            duration <= 2.5
-        ), f"Duration {duration:.1f}s exceeds max_duration + tolerance"
+        assert duration <= 2.5, f"Duration {duration:.1f}s exceeds max_duration + tolerance"
 
 
 # ---------------------------------------------------------------------------
@@ -272,9 +262,7 @@ class TestManualGain:
         out_quiet = str(tmp_path / "quiet.wav")
         profile = _get_profile()
 
-        render_preview_mix(
-            render_dir=render_dir, profile=profile, output_path=out_normal
-        )
+        render_preview_mix(render_dir=render_dir, profile=profile, output_path=out_normal)
         render_preview_mix(
             render_dir=render_dir,
             profile=profile,

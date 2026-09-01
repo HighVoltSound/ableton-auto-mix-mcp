@@ -37,27 +37,17 @@ class MultibandConfig:
 
     bands: list[BandConfig] = field(
         default_factory=lambda: [
-            BandConfig(
-                freq_lo=0, freq_hi=120, threshold_db=-16, ratio=2.5, makeup_db=1.0
-            ),  # sub
-            BandConfig(
-                freq_lo=120, freq_hi=2500, threshold_db=-14, ratio=2.0, makeup_db=0.0
-            ),  # low-mid
-            BandConfig(
-                freq_lo=2500, freq_hi=8000, threshold_db=-12, ratio=1.8, makeup_db=0.0
-            ),  # mid
-            BandConfig(
-                freq_lo=8000, freq_hi=20000, threshold_db=-14, ratio=2.0, makeup_db=0.5
-            ),  # air
+            BandConfig(freq_lo=0, freq_hi=120, threshold_db=-16, ratio=2.5, makeup_db=1.0),  # sub
+            BandConfig(freq_lo=120, freq_hi=2500, threshold_db=-14, ratio=2.0, makeup_db=0.0),  # low-mid
+            BandConfig(freq_lo=2500, freq_hi=8000, threshold_db=-12, ratio=1.8, makeup_db=0.0),  # mid
+            BandConfig(freq_lo=8000, freq_hi=20000, threshold_db=-14, ratio=2.0, makeup_db=0.5),  # air
         ]
     )
     enabled: bool = True
     mix: float = 1.0  # dry/wet: 1.0 = full multiband, 0.0 = bypass
 
 
-def _crossover_lr4(
-    audio: np.ndarray, sr: int, freq: float, highpass: bool
-) -> np.ndarray:
+def _crossover_lr4(audio: np.ndarray, sr: int, freq: float, highpass: bool) -> np.ndarray:
     """4th-order Linkwitz-Riley crossover filter.
 
     Two cascaded Butterworth 2nd-order sections give a −24 dB/oct rolloff
@@ -65,15 +55,11 @@ def _crossover_lr4(
     highpass and lowpass outputs are summed.
     """
     freq = float(np.clip(freq, 1.0, sr * 0.49))
-    sos = butter(
-        2, freq, btype="highpass" if highpass else "lowpass", fs=sr, output="sos"
-    )
+    sos = butter(2, freq, btype="highpass" if highpass else "lowpass", fs=sr, output="sos")
     return sosfiltfilt(sos, audio, axis=0)
 
 
-def _split_bands(
-    audio: np.ndarray, sr: int, band_edges: list[float]
-) -> list[np.ndarray]:
+def _split_bands(audio: np.ndarray, sr: int, band_edges: list[float]) -> list[np.ndarray]:
     """Split a stereo signal into N bands using Linkwitz-Riley crossovers.
 
     band_edges: sorted list of crossover frequencies. For 4 bands with
@@ -82,18 +68,11 @@ def _split_bands(
     bands: list[np.ndarray] = []
     # Start from the full signal and progressively subtract bands.
     remaining = audio.copy()
-    prev_edge = 0.0
 
     for edge in band_edges:
-        # Low-pass the remaining signal at this edge → this is the band below.
-        lp = _crossover_lr4(remaining, sr, edge, highpass=False)
-        # The band is what's left minus the next lowpass portion.
         band = remaining - _crossover_lr4(remaining, sr, edge, highpass=True)
-        # But more precisely: band = lowpass(remaining, edge) - lowpass(remaining, prev_edge)
-        # For simplicity, just use: lowpass remaining at edge, subtract lowpass at next edge.
         bands.append(band)
         remaining = remaining - band
-        prev_edge = edge
 
     # Whatever is left is the top band.
     bands.append(remaining)

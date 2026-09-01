@@ -29,9 +29,7 @@ class SidechainConfig:
     amount_db: float = -3.0  # how much to duck (negative = quieter)
     attack_ms: float = 5.0  # envelope attack time
     release_ms: float = 90.0  # envelope release time
-    band_filter: tuple[float, float] | None = (
-        None  # freq range to duck (None = full band)
-    )
+    band_filter: tuple[float, float] | None = None  # freq range to duck (None = full band)
     mix: float = 1.0  # dry/wet (0 = no ducking, 1 = full sidechain)
     enabled: bool = True
 
@@ -39,7 +37,7 @@ class SidechainConfig:
 def config_from_dict(d: dict[str, Any]) -> SidechainConfig:
     """Build SidechainConfig from an API dict, ignoring unknown keys."""
     band = d.get("band_filter")
-    if isinstance(band, (list, tuple)) and len(band) == 2:
+    if isinstance(band, list | tuple) and len(band) == 2:
         band = (float(band[0]), float(band[1]))
     else:
         band = None
@@ -124,9 +122,7 @@ def apply_sidechain(
         return audio
 
     # Compute trigger envelope
-    envelope = _envelope_follower(
-        trigger_audio, sr, config.attack_ms, config.release_ms
-    )
+    envelope = _envelope_follower(trigger_audio, sr, config.attack_ms, config.release_ms)
 
     # Convert amount_db to linear gain
     amount_linear = 10 ** (config.amount_db / 20.0)

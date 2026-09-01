@@ -30,9 +30,7 @@ class ConnectionManager:
         await ws.accept()
         async with self._lock:
             self._rooms.setdefault(room_id, set()).add(ws)
-        logger.debug(
-            "WS connected: room=%s (total=%d)", room_id, len(self._rooms[room_id])
-        )
+        logger.debug("WS connected: room=%s (total=%d)", room_id, len(self._rooms[room_id]))
 
     async def disconnect(self, ws: WebSocket, room_id: str) -> None:
         """Remove a WebSocket connection from a room."""

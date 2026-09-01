@@ -122,9 +122,7 @@ def extract_spectral_envelope(
     return normalized_db
 
 
-def analyze_reference_audio(
-    audio_path: str, max_duration: float = 60.0
-) -> ReferenceAnalysis:
+def analyze_reference_audio(audio_path: str, max_duration: float = 60.0) -> ReferenceAnalysis:
     """Analyze audio file and return reference psychoacoustic metrics."""
     data, sr = sf.read(audio_path, dtype="float32")
     if len(data) > int(max_duration * sr):

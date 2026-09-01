@@ -29,9 +29,7 @@ class TransientConfig:
     enabled: bool = True
 
 
-def _detect_transients(
-    audio: np.ndarray, sr: int, sensitivity: float
-) -> tuple[np.ndarray, np.ndarray]:
+def _detect_transients(audio: np.ndarray, sr: int, sensitivity: float) -> tuple[np.ndarray, np.ndarray]:
     """Detect transient (attack) and sustain portions of the signal.
 
     Returns (attack_env, sustain_env), each the same length as the audio,
@@ -75,9 +73,7 @@ def _detect_transients(
     return attack_smooth, sustain
 
 
-def apply_transient_shaper(
-    audio: np.ndarray, sr: int, config: TransientConfig
-) -> np.ndarray:
+def apply_transient_shaper(audio: np.ndarray, sr: int, config: TransientConfig) -> np.ndarray:
     """Apply transient shaping to a stereo signal.
 
     1. Detect transients (attack/sustain envelopes)

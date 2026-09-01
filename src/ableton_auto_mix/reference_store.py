@@ -12,7 +12,6 @@ import os
 from dataclasses import asdict, dataclass, field
 from typing import Any
 
-
 DEFAULT_DB_PATH = os.path.join(os.path.dirname(__file__), "reference_db.json")
 
 
@@ -53,7 +52,7 @@ class ReferenceStore:
             self.references = []
             return
         try:
-            with open(self.db_path, "r", encoding="utf-8") as f:
+            with open(self.db_path, encoding="utf-8") as f:
                 data = json.load(f)
             self.references = [TrackReference(**entry) for entry in data]
         except Exception:
@@ -92,9 +91,7 @@ class ReferenceStore:
         # Band energy distance (Euclidean on common bands)
         common_bands = set(a.band_energy.keys()) & set(b.band_energy.keys())
         if common_bands:
-            band_diff = sum(
-                (a.band_energy[k] - b.band_energy[k]) ** 2 for k in common_bands
-            )
+            band_diff = sum((a.band_energy[k] - b.band_energy[k]) ** 2 for k in common_bands)
             score += (band_diff / len(common_bands)) ** 0.5 * 0.1
 
         return score
@@ -387,9 +384,8 @@ def save_mix_to_references(
     for analysis, corr in zip(analyses, mix_result.track_corrections, strict=False):
         # Build band_energy dict from analysis if available
         band_energy = {}
-        if hasattr(analysis, "band_energy") and analysis.band_energy:
-            if isinstance(analysis.band_energy, dict):
-                band_energy = analysis.band_energy
+        if hasattr(analysis, "band_energy") and analysis.band_energy and isinstance(analysis.band_energy, dict):
+            band_energy = analysis.band_energy
 
         ref = TrackReference(
             role=corr.role,
@@ -397,9 +393,7 @@ def save_mix_to_references(
             lufs=getattr(analysis, "lufs", -14.0),
             rms_db=getattr(analysis, "rms_db", -20.0),
             peak_db=getattr(analysis, "peak_db", -6.0),
-            crest_factor=(
-                getattr(analysis, "peak_db", -6.0) - getattr(analysis, "rms_db", -20.0)
-            ),
+            crest_factor=(getattr(analysis, "peak_db", -6.0) - getattr(analysis, "rms_db", -20.0)),
             band_energy=band_energy,
             source=source,
             confidence=0.75,

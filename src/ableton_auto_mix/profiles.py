@@ -109,9 +109,7 @@ def get_profile(name: str) -> StyleProfile:
     for profile in list_profiles():
         if profile.name == name:
             return profile
-    raise KeyError(
-        f"Unknown style '{name}'. Available: {', '.join(p.name for p in list_profiles())}"
-    )
+    raise KeyError(f"Unknown style '{name}'. Available: {', '.join(p.name for p in list_profiles())}")
 
 
 load_profile = get_profile

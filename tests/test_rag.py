@@ -4,19 +4,17 @@ from __future__ import annotations
 
 import os
 
-
 from ableton_auto_mix.ai_recommender import (
     Recommendations,
-    recommend,
     _retrieve_references,
+    recommend,
 )
 from ableton_auto_mix.reference_store import (
     ReferenceStore,
     TrackReference,
-    init_default_db,
     _build_seed_references,
+    init_default_db,
 )
-
 
 # ---------------------------------------------------------------------------
 # ReferenceStore tests
@@ -50,12 +48,8 @@ class TestReferenceStore:
     def test_retrieve_same_role_same_genre(self, tmp_path: str) -> None:
         db_path = os.path.join(tmp_path, "test_db.json")
         store = ReferenceStore(db_path)
-        store.add(
-            TrackReference(role="kick", genre="techno", lufs=-16.0, crest_factor=10.0)
-        )
-        store.add(
-            TrackReference(role="kick", genre="techno", lufs=-14.0, crest_factor=12.0)
-        )
+        store.add(TrackReference(role="kick", genre="techno", lufs=-16.0, crest_factor=10.0))
+        store.add(TrackReference(role="kick", genre="techno", lufs=-14.0, crest_factor=12.0))
         store.add(TrackReference(role="bass", genre="techno", lufs=-18.0))
 
         results = store.retrieve(role="kick", genre="techno", k=2)
@@ -126,12 +120,8 @@ class TestRecommendRAG:
         assert len(rag_recs) > 0, "No RAG references found in recommendations"
 
     def test_recommend_genre_aware(self) -> None:
-        techno_tracks = [
-            _make_track("kick", "kick", lufs=-16.0, rms_db=-18.0, peak_db=-6.0)
-        ]
-        ambient_tracks = [
-            _make_track("pad", "pad", lufs=-24.0, rms_db=-28.0, peak_db=-10.0)
-        ]
+        techno_tracks = [_make_track("kick", "kick", lufs=-16.0, rms_db=-18.0, peak_db=-6.0)]
+        ambient_tracks = [_make_track("pad", "pad", lufs=-24.0, rms_db=-28.0, peak_db=-10.0)]
 
         techno_recs = recommend(techno_tracks, genre="techno")
         ambient_recs = recommend(ambient_tracks, genre="ambient")
@@ -148,9 +138,7 @@ class TestRecommendRAG:
         ]
         result = recommend(tracks, genre="techno")
         for rec in result.recommendations:
-            assert (
-                0.0 <= rec.confidence <= 1.0
-            ), f"Confidence out of range: {rec.confidence}"
+            assert 0.0 <= rec.confidence <= 1.0, f"Confidence out of range: {rec.confidence}"
 
     def test_recommend_role_map(self) -> None:
         tracks = [

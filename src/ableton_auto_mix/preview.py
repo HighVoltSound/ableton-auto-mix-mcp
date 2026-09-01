@@ -13,10 +13,6 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
-from .logging_utils import Timer, get_logger
-
-_log = get_logger("preview")
-
 import numpy as np
 import pyloudnorm as pyln
 import soundfile as sf
@@ -41,6 +37,7 @@ from .dsp._utils import (
 from .dsp._utils import (
     true_peak_db as _true_peak_db,
 )
+from .logging_utils import Timer, get_logger
 from .mixer import BandCorrection, compute_mix
 from .profiles import StyleProfile
 from .reference import (
@@ -54,15 +51,15 @@ from .reference import (
     load_audio_stereo,
 )
 
+_log = get_logger("preview")
+
 PAN_LAW_DB = -3.0  # equal-power-ish center attenuation
 
 # Safety clamp for the per-track spectral corrections (same as match EQ).
 MAX_TRACK_EQ_DB = MAX_MATCH_GAIN_DB
 
 
-def _apply_band_correction(
-    audio: np.ndarray, sr: int, bc: BandCorrection
-) -> tuple[np.ndarray, dict[str, Any]]:
+def _apply_band_correction(audio: np.ndarray, sr: int, bc: BandCorrection) -> tuple[np.ndarray, dict[str, Any]]:
     """Sound one spectral correction from mixer.compute_mix on a stereo track.
 
     Designs a biquad from the band's range_hz / delta_db: a peaking filter in
@@ -97,9 +94,7 @@ def _apply_band_correction(
     return filtered, info
 
 
-def _band_eq(
-    audio: np.ndarray, sr: int, eq_specs: list[dict], max_db: float = 12.0
-) -> np.ndarray:
+def _band_eq(audio: np.ndarray, sr: int, eq_specs: list[dict], max_db: float = 12.0) -> np.ndarray:
     """Apply per-band gain to a stereo signal.
 
     Each band is isolated with a 4th-order Butterworth band-pass, gained, and
@@ -128,9 +123,7 @@ def _pan_gains(pan: float) -> tuple[float, float]:
 # _apply_width, _apply_side_gain — imported from dsp._utils
 
 
-def _apply_eq_nodes(
-    audio: np.ndarray, sr: int, nodes: list[dict], max_db: float = MAX_TRACK_EQ_DB
-) -> np.ndarray:
+def _apply_eq_nodes(audio: np.ndarray, sr: int, nodes: list[dict], max_db: float = MAX_TRACK_EQ_DB) -> np.ndarray:
     """Apply planner-style EQ nodes [{hz, gain_db, q, type}] as biquads.
 
     Reuses the RBJ designs from reference.py; type is "peaking" (default),
@@ -166,9 +159,7 @@ def _sidechain_gain(
     (max-filter) and a smooth exponential release. Returns a per-sample gain
     array of the same length as the signal.
     """
-    mono = np.abs(
-        sidechain_signal.mean(axis=1) if sidechain_signal.ndim > 1 else sidechain_signal
-    )
+    mono = np.abs(sidechain_signal.mean(axis=1) if sidechain_signal.ndim > 1 else sidechain_signal)
     # amount_db is "duck by this many dB" (sign-agnostic: -4.0 or 4.0 both = -4 dB).
     floor = 10 ** (-abs(amount_db) / 20.0)
 
@@ -357,9 +348,7 @@ def _limit_peaks(audio: np.ndarray, sr: int, ceiling_db: float = -1.0) -> np.nda
     try:
         from .dsp.limiter import LimiterConfig, apply_true_peak_limiter
 
-        return apply_true_peak_limiter(
-            audio, sr, LimiterConfig(ceiling_dbtp=ceiling_db)
-        )
+        return apply_true_peak_limiter(audio, sr, LimiterConfig(ceiling_dbtp=ceiling_db))
     except Exception:
         up = resample_poly(audio, 4, 1, axis=0)
         up_sr = sr * 4
@@ -376,9 +365,7 @@ def _limit_peaks(audio: np.ndarray, sr: int, ceiling_db: float = -1.0) -> np.nda
         return resample_poly(out_up_clipped, 1, 4, axis=0)
 
 
-def _apply_user_eq_bands(
-    audio: np.ndarray, sr: int, eq_bands: list[dict] | None
-) -> np.ndarray:
+def _apply_user_eq_bands(audio: np.ndarray, sr: int, eq_bands: list[dict] | None) -> np.ndarray:
     """Apply interactive user-configured EQ bands (peaking, shelves, cuts) to audio."""
     if not eq_bands:
         return audio
@@ -406,9 +393,7 @@ def _apply_user_eq_bands(
             sos = butter(2, max(20.0, freq) / nyquist, btype="highpass", output="sos")
             out = sosfiltfilt(sos, out, axis=0)
         elif b_type == "high_cut":
-            sos = butter(
-                2, min(sr * 0.45, freq) / nyquist, btype="lowpass", output="sos"
-            )
+            sos = butter(2, min(sr * 0.45, freq) / nyquist, btype="lowpass", output="sos")
             out = sosfiltfilt(sos, out, axis=0)
         else:
             b_coeff, a_coeff = _peaking_biquad(sr, freq, gain, q=q)
@@ -416,9 +401,7 @@ def _apply_user_eq_bands(
     return out
 
 
-def _normalize_to_lufs(
-    audio: np.ndarray, sr: int, target_lufs: float, ceiling_dbtp: float = -1.0
-) -> np.ndarray:
+def _normalize_to_lufs(audio: np.ndarray, sr: int, target_lufs: float, ceiling_dbtp: float = -1.0) -> np.ndarray:
     """Iterate gain -> limit until integrated loudness reaches the target.
     The limiter keeps the true peak under the ceiling, so the final result is
     clipping-free at both the sample level and between samples."""
@@ -557,13 +540,9 @@ def render_preview_mix(
     # Merge PreviewOptions into individual kwargs (options wins if set).
     if options is not None:
         output_path = options.output_path or output_path
-        max_duration = (
-            options.max_duration if options.max_duration is not None else max_duration
-        )
+        max_duration = options.max_duration if options.max_duration is not None else max_duration
         manual_gain = options.manual_gain or manual_gain
-        sidechain_db = (
-            options.sidechain_db if options.sidechain_db is not None else sidechain_db
-        )
+        sidechain_db = options.sidechain_db if options.sidechain_db is not None else sidechain_db
         sidechain_config = options.sidechain_config or sidechain_config
         reference_path = options.reference_path or reference_path
         reference_match_bands = options.reference_match_bands or reference_match_bands
@@ -571,9 +550,7 @@ def render_preview_mix(
         apply_plan = options.apply_plan or apply_plan
         multiband_config = options.multiband_config or multiband_config
         limiter_ceiling_db = (
-            options.limiter_ceiling_db
-            if options.limiter_ceiling_db is not None
-            else limiter_ceiling_db
+            options.limiter_ceiling_db if options.limiter_ceiling_db is not None else limiter_ceiling_db
         )
         dynamic_eq_config = options.dynamic_eq_config or dynamic_eq_config
         midside_eq_config = options.midside_eq_config or midside_eq_config
@@ -614,9 +591,7 @@ def render_preview_mix(
         progress_callback("mixing", 10, f"Computing mix for {len(analyses)} tracks…")
 
     with Timer("compute_mix", _log):
-        mix = compute_mix(
-            analyses, profile, [a.name for a in analyses], use_planner=apply_plan
-        )
+        mix = compute_mix(analyses, profile, [a.name for a in analyses], use_planner=apply_plan)
 
     # Planner: classify actions into mixing (per-track) vs mastering (bus).
     plan: Any | None = None
@@ -636,9 +611,7 @@ def render_preview_mix(
     used_sr = None
     total_tracks = len(analyses)
     _log.info("Processing %d tracks…", total_tracks)
-    for track_idx, (analysis, corr) in enumerate(
-        zip(analyses, mix.track_corrections, strict=False)
-    ):
+    for track_idx, (analysis, corr) in enumerate(zip(analyses, mix.track_corrections, strict=False)):
         if progress_callback:
             pct = 15 + int(25 * track_idx / max(total_tracks, 1))
             progress_callback(
@@ -774,11 +747,7 @@ def render_preview_mix(
         # (they mirror the corrections; plan wins to avoid divergence).
         if plan is not None:
             gain_acts = track_acts.get("gain") or []
-            volume_db = (
-                gain_acts[0]["params"]["gain_db"]
-                if gain_acts
-                else (corr.volume_db or 0.0)
-            )
+            volume_db = gain_acts[0]["params"]["gain_db"] if gain_acts else (corr.volume_db or 0.0)
             pan_acts = track_acts.get("pan") or []
             pan_value = pan_acts[0]["params"]["pan"] if pan_acts else corr.pan
         else:
@@ -869,14 +838,10 @@ def render_preview_mix(
         # bass/sub when the snare hits, leaving the rest of their spectrum.
         if snare_band_duck is not None:
             targets = set(duck_snare_band.get("targets", ["bass", "sub_bass"]))
-            band_range = [
-                float(x) for x in duck_snare_band.get("band_range", [100, 300])
-            ]
+            band_range = [float(x) for x in duck_snare_band.get("band_range", [100, 300])]
             for i, corr in enumerate(mix.track_corrections):
                 if corr.role in targets and i not in snare_idxs:
-                    stereo_parts[i] = _band_duck(
-                        stereo_parts[i], used_sr, band_range, snare_band_duck
-                    )
+                    stereo_parts[i] = _band_duck(stereo_parts[i], used_sr, band_range, snare_band_duck)
 
     # User-configurable sidechain: applied on top of the profile sidechain.
     if sidechain_config and sidechain_config.get("enabled") and used_sr:
@@ -885,20 +850,14 @@ def render_preview_mix(
 
         sc = sc_cfg(sidechain_config)
         trigger_role = sc.trigger
-        trigger_idxs = [
-            i for i, c in enumerate(mix.track_corrections) if c.role == trigger_role
-        ]
+        trigger_idxs = [i for i, c in enumerate(mix.track_corrections) if c.role == trigger_role]
         if trigger_idxs:
             trigger_audio = sum(stereo_parts[i] for i in trigger_idxs)
             target_idxs = [
-                i
-                for i, c in enumerate(mix.track_corrections)
-                if c.role in sc.targets and i not in trigger_idxs
+                i for i, c in enumerate(mix.track_corrections) if c.role in sc.targets and i not in trigger_idxs
             ]
             for i in target_idxs:
-                stereo_parts[i] = apply_sidechain(
-                    stereo_parts[i], used_sr, trigger_audio, sc
-                )
+                stereo_parts[i] = apply_sidechain(stereo_parts[i], used_sr, trigger_audio, sc)
 
     # Sum, then master: soft clip (if enabled) -> loudness normalize (TP-safe).
     if progress_callback:
@@ -915,13 +874,9 @@ def render_preview_mix(
     if plan is not None:
         for act in plan.master_actions:
             if act["kind"] == "eq":
-                mixdown = _apply_eq_nodes(
-                    mixdown, used_sr, act["params"].get("nodes", [])
-                )
+                mixdown = _apply_eq_nodes(mixdown, used_sr, act["params"].get("nodes", []))
             elif act["kind"] == "width":
-                mixdown = _apply_side_gain(
-                    mixdown, float(act["params"].get("side_gain", 1.0))
-                )
+                mixdown = _apply_side_gain(mixdown, float(act["params"].get("side_gain", 1.0)))
             elif act["kind"] in ("loudness", "gain"):
                 plan_loudness = act
 
@@ -993,9 +948,7 @@ def render_preview_mix(
         )
 
     ceiling_dbtp = (
-        float(limiter_ceiling_db)
-        if limiter_ceiling_db is not None
-        else float(mcfg.get("ceiling_dbtp", -1.0))
+        float(limiter_ceiling_db) if limiter_ceiling_db is not None else float(mcfg.get("ceiling_dbtp", -1.0))
     )
     if plan is not None and plan_loudness is not None:
         # Plan-driven loudness: one deliberate gain move + true-peak limiter.
@@ -1029,14 +982,10 @@ def render_preview_mix(
         "eq_applied": eq_applied,
         "match_eq": match_eq_info,
         "sidechain": {
-            "kick": {"targets": list(duck_kick.get("targets", []))}
-            if duck_kick
-            else None,
+            "kick": {"targets": list(duck_kick.get("targets", []))} if duck_kick else None,
             "snare_band": {
                 "targets": list(duck_snare_band.get("targets", [])),
-                "band_range": [
-                    float(x) for x in duck_snare_band.get("band_range", [100, 300])
-                ],
+                "band_range": [float(x) for x in duck_snare_band.get("band_range", [100, 300])],
             }
             if duck_snare_band
             else None,
@@ -1074,9 +1023,7 @@ def render_preview_mix(
     try:
         from .reference_store import save_mix_to_references
 
-        save_mix_to_references(
-            analyses, mix, genre=profile.name, source=f"preview_{profile.name}"
-        )
+        save_mix_to_references(analyses, mix, genre=profile.name, source=f"preview_{profile.name}")
     except Exception as exc:
         _log.warning("Failed to save mix to reference store: %s", exc)
 

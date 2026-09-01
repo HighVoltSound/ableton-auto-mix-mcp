@@ -102,8 +102,7 @@ def compressor(
     # small linear taper right at the threshold to avoid a hard kink).
     knee = 2.0
     taper = np.clip(
-        (env_hold / threshold - 1.0) / (knee / threshold) * (1.0 / ratio)
-        + (1.0 - 1.0 / ratio),
+        (env_hold / threshold - 1.0) / (knee / threshold) * (1.0 / ratio) + (1.0 - 1.0 / ratio),
         0.0,
         1.0,
     )

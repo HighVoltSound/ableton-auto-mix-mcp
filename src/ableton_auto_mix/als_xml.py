@@ -37,9 +37,7 @@ def _xml_indent(elem: ET.Element, level: int = 0) -> None:
             elem.tail = "\n"
 
 
-def _add_text(
-    parent: ET.Element, tag: str, value: Any, attrib: dict | None = None
-) -> ET.Element:
+def _add_text(parent: ET.Element, tag: str, value: Any, attrib: dict | None = None) -> ET.Element:
     el = ET.SubElement(parent, tag, attrib or {})
     el.text = str(value)
     return el
@@ -70,9 +68,7 @@ def build_eq_device(parent: ET.Element, band_corrections: list[dict]) -> None:
         band_idx = i
         delta = corr.get("delta_db", corr.get("gain_db", 0.0))
         freq_range = corr.get("freq_range", [0, 0])
-        freq_hz = corr.get("frequency") or (
-            (freq_range[0] + freq_range[1]) / 2.0 if len(freq_range) == 2 else 1000.0
-        )
+        freq_hz = corr.get("frequency") or ((freq_range[0] + freq_range[1]) / 2.0 if len(freq_range) == 2 else 1000.0)
 
         band_param = ET.SubElement(param_list, "PluginParameter")
         _add_text(band_param, "ParameterName", f"Filter {band_idx + 1} Gain")
@@ -211,17 +207,11 @@ def _build_audio_track(
             build_eq_device(devices, band_corrections)
         # 2. Sidechain Compressor
         if sidechain_enabled:
-            build_compressor_device(
-                devices, sidechain_enabled=True, threshold_db=-16.0, ratio=4.0
-            )
+            build_compressor_device(devices, sidechain_enabled=True, threshold_db=-16.0, ratio=4.0)
         # 3. Utility
         build_utility_device(
             devices,
-            bass_mono=(
-                "bass" in name.lower()
-                or "808" in name.lower()
-                or "kick" in name.lower()
-            ),
+            bass_mono=("bass" in name.lower() or "808" in name.lower() or "kick" in name.lower()),
             width_pct=100.0,
         )
 
@@ -284,9 +274,7 @@ def write_als(
     master_eq_bands: list[dict] | None = None,
 ) -> str:
     """Build and write an .als file (ZIP-compressed XML)."""
-    xml_content = build_session(
-        corrections, tempo, time_sig_num, time_sig_den, master_eq_bands
-    )
+    xml_content = build_session(corrections, tempo, time_sig_num, time_sig_den, master_eq_bands)
     abs_path = os.path.abspath(output_path)
     os.makedirs(os.path.dirname(abs_path), exist_ok=True)
 

@@ -290,9 +290,7 @@ def match_role_with_spectrum(name: str, band_energy: dict[str, float]) -> str:
     return _spectral_role(band_energy)
 
 
-def _profile_role(
-    profile: StyleProfile, name: str, band_energy: dict[str, float]
-) -> str:
+def _profile_role(profile: StyleProfile, name: str, band_energy: dict[str, float]) -> str:
     """Role for a track: explicit per-file override in the profile wins."""
     override = (profile.role_override or {}).get(name)
     if override:
@@ -381,11 +379,7 @@ def suggest_style(analyses: list[TrackAnalysis]) -> dict[str, Any]:
     scores: list[tuple[float, str, str]] = []
     for p in list_profiles():
         lufs_score = abs(p.target_lufs - measured_lufs) / 4.0
-        target_bands = {
-            b["band"]: b["target_db"]
-            for b in p.frequency_balance
-            if b["band"] in measured_bands
-        }
+        target_bands = {b["band"]: b["target_db"] for b in p.frequency_balance if b["band"] in measured_bands}
         if len(target_bands) == len(measured_bands):
             m = np.array([measured_bands[b] for b in target_bands])
             t = np.array([target_bands[b] for b in target_bands])
@@ -401,9 +395,7 @@ def suggest_style(analyses: list[TrackAnalysis]) -> dict[str, Any]:
         "suggested_style": best[1],
         "label": best[2],
         "measured_lufs": round(measured_lufs, 1),
-        "ranked": [
-            {"style": s[1], "label": s[2], "score": round(s[0], 2)} for s in scores
-        ],
+        "ranked": [{"style": s[1], "label": s[2], "score": round(s[0], 2)} for s in scores],
         "spectral_distance": {
             "measured_bands": {k: round(v, 1) for k, v in measured_bands.items()},
             "best_fit_style": best[1],
@@ -455,15 +447,12 @@ def compute_mix(
     else:
         # No track named like a kick: pick the most sub-heavy / punchiest one.
         sub_scores = [
-            analyses[i].bandwidth_db.get("sub_bass", -120.0)
-            + analyses[i].bandwidth_db.get("bass", -120.0)
+            analyses[i].bandwidth_db.get("sub_bass", -120.0) + analyses[i].bandwidth_db.get("bass", -120.0)
             for i in range(len(analyses))
         ]
         anchor_idx = int(np.argmax(sub_scores))
         anchor_note = "no kick by name; anchored on most low-end track"
-    anchor_role = _profile_role(
-        profile, names[anchor_idx], analyses[anchor_idx].bandwidth_db
-    )
+    anchor_role = _profile_role(profile, names[anchor_idx], analyses[anchor_idx].bandwidth_db)
     anchor_target = profile.track_balance.get(anchor_role, {}).get("level", 0.0)
 
     for i, (analysis, name) in enumerate(zip(analyses, names, strict=False)):
@@ -496,9 +485,7 @@ def compute_mix(
             target_level = role_cfg.get("level", 0.0)
             # Keep anchor's level, set others relative to it. If the anchor
             # itself has no profile role, fall back to relative-to-anchor.
-            adj = (target_level - anchor_target) - (
-                analysis.lufs - analyses[anchor_idx].lufs
-            )
+            adj = (target_level - anchor_target) - (analysis.lufs - analyses[anchor_idx].lufs)
             corr.volume_db = round(min(max(adj, -18.0), 18.0), 1)
             if "pan" in role_cfg:
                 corr.pan = role_cfg["pan"]
@@ -513,28 +500,16 @@ def compute_mix(
         # compare the measured curve to the profile curve after removing each
         # curve's mean, and report the relative per-band adjustment.
         measured_curve = np.array(
-            [
-                analysis.bandwidth_db[b["band"]]
-                for b in profile.frequency_balance
-                if b["band"] in analysis.bandwidth_db
-            ]
+            [analysis.bandwidth_db[b["band"]] for b in profile.frequency_balance if b["band"] in analysis.bandwidth_db]
         )
         target_curve = np.array(
-            [
-                b["target_db"]
-                for b in profile.frequency_balance
-                if b["band"] in analysis.bandwidth_db
-            ]
+            [b["target_db"] for b in profile.frequency_balance if b["band"] in analysis.bandwidth_db]
         )
         if len(measured_curve) == len(target_curve) and len(measured_curve) > 0:
             deviation = measured_curve - target_curve  # + = louder than target
             shape_error = deviation - deviation.mean()  # removes overall level
             for band_spec, rel in zip(
-                [
-                    b
-                    for b in profile.frequency_balance
-                    if b["band"] in analysis.bandwidth_db
-                ],
+                [b for b in profile.frequency_balance if b["band"] in analysis.bandwidth_db],
                 shape_error,
                 strict=False,
             ):
@@ -543,10 +518,7 @@ def compute_mix(
                 # If the band has essentially no energy (e.g. a pure sub has
                 # no highs at -120 dBFS), boosting is pointless — flag it.
                 if measured < -90.0:
-                    corr.notes.append(
-                        f"band '{band_spec['band']}' has no energy "
-                        f"({measured:.0f} dBFS); no EQ possible"
-                    )
+                    corr.notes.append(f"band '{band_spec['band']}' has no energy ({measured:.0f} dBFS); no EQ possible")
                     continue
                 if abs(rel_delta) >= 1.5:
                     corr.band_corrections.append(
@@ -580,8 +552,7 @@ def compute_mix(
     for name, comp in profile.compression.items():
         if name == "bus":
             master_notes.append(
-                f"bus comp: ratio {comp['ratio']}:1, "
-                f"attack {comp['attack_ms']}ms, release {comp['release_ms']}ms"
+                f"bus comp: ratio {comp['ratio']}:1, attack {comp['attack_ms']}ms, release {comp['release_ms']}ms"
             )
 
     # -- planner: strip per-track EQ deltas promoted to the bus ------------

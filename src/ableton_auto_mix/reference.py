@@ -19,6 +19,8 @@ from scipy.signal import resample_poly, welch
 
 from .dsp.biquad import (
     apply_biquad,
+)
+from .dsp.biquad import (
     peaking_biquad as _peaking_biquad,
 )
 
@@ -68,7 +70,7 @@ def _band_spectrum_db(audio: np.ndarray, sr: int, edges: np.ndarray) -> np.ndarr
         nperseg = max(2 ** int(np.ceil(np.log2(max(len(mono), 16)))), 16)
     freqs, psd = welch(mono, fs=sr, nperseg=nperseg)
     out = np.empty(len(edges) - 1)
-    for i, (lo, hi) in enumerate(zip(edges[:-1], edges[1:])):
+    for i, (lo, hi) in enumerate(zip(edges[:-1], edges[1:], strict=False)):
         mask = (freqs >= lo) & (freqs < hi)
         # Welch bins are linear; take the mean power of every bin touching
         # the band so narrow high-frequency bands are not under-sampled.
@@ -118,10 +120,7 @@ def compute_match_curve(
     gains = np.clip(diff, -MAX_MATCH_GAIN_DB, MAX_MATCH_GAIN_DB)
 
     centers = np.sqrt(edges[:-1] * edges[1:])
-    return [
-        {"hz": round(float(c), 1), "gain_db": round(float(g), 2)}
-        for c, g in zip(centers, gains)
-    ]
+    return [{"hz": round(float(c), 1), "gain_db": round(float(g), 2)} for c, g in zip(centers, gains, strict=False)]
 
 
 def _local_maxima_indices(x: np.ndarray) -> list[int]:
@@ -171,9 +170,7 @@ def apply_match_eq(
     return out
 
 
-def compute_match_eq_for_files(
-    mix_wav_path: str, reference_path: str, n_bands: int = 24
-) -> dict[str, Any]:
+def compute_match_eq_for_files(mix_wav_path: str, reference_path: str, n_bands: int = 24) -> dict[str, Any]:
     """Curve for a mix/reference pair of files (used by the HTTP API)."""
     mix_audio, mix_sr = load_audio_stereo(mix_wav_path)
     ref_audio, ref_sr = load_audio_stereo(reference_path)

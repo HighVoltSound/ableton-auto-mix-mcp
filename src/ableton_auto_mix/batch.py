@@ -82,9 +82,7 @@ def run_batch(
 
             # Output path
             if output_dir:
-                out = os.path.join(
-                    output_dir, f"batch_{os.path.basename(directory)}.wav"
-                )
+                out = os.path.join(output_dir, f"batch_{os.path.basename(directory)}.wav")
             else:
                 out = os.path.join(directory, f"preview_{profile.name}.wav")
 
@@ -109,8 +107,6 @@ def run_batch(
         result.items.append(item)
 
     if progress_callback:
-        progress_callback(
-            "batch", 100, f"Done: {result.completed} ok, {result.failed} failed"
-        )
+        progress_callback("batch", 100, f"Done: {result.completed} ok, {result.failed} failed")
 
     return result

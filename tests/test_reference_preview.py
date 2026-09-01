@@ -42,19 +42,13 @@ def render_dir(tmp_path_factory) -> str:
     t = np.linspace(0, 0.25, n_kick, endpoint=False)
     kick = (np.exp(-t * 30) * np.sin(2 * np.pi * 60 * t)).reshape(-1, 1)
     kick = np.pad(kick, ((0, SR * int(DUR) - n_kick), (0, 0)))
-    sf.write(
-        os.path.join(tmp, "kick.wav"), np.repeat(kick, 2, axis=1), SR, subtype="PCM_16"
-    )
+    sf.write(os.path.join(tmp, "kick.wav"), np.repeat(kick, 2, axis=1), SR, subtype="PCM_16")
 
     bass = _tone(80, amp=0.5).reshape(-1, 1)
-    sf.write(
-        os.path.join(tmp, "bass.wav"), np.repeat(bass, 2, axis=1), SR, subtype="PCM_16"
-    )
+    sf.write(os.path.join(tmp, "bass.wav"), np.repeat(bass, 2, axis=1), SR, subtype="PCM_16")
 
     rng = np.random.default_rng(7)
-    noise = rng.uniform(-1, 1, SR * int(DUR)) * np.exp(
-        -np.linspace(0, 1, SR * int(DUR)) * 15
-    )
+    noise = rng.uniform(-1, 1, SR * int(DUR)) * np.exp(-np.linspace(0, 1, SR * int(DUR)) * 15)
     snare = noise.reshape(-1, 1) * 0.4
     sf.write(
         os.path.join(tmp, "snare.wav"),
@@ -63,9 +57,7 @@ def render_dir(tmp_path_factory) -> str:
         subtype="PCM_16",
     )
 
-    sf.write(
-        os.path.join(tmp, "vocals.wav"), _tone(440, amp=0.15), SR, subtype="PCM_16"
-    )
+    sf.write(os.path.join(tmp, "vocals.wav"), _tone(440, amp=0.15), SR, subtype="PCM_16")
     _register_dir(tmp)
     return tmp
 
@@ -105,9 +97,7 @@ def test_match_curve_identical_signals_is_flat(render_dir: str) -> None:
     assert hz[0] >= 20.0 and hz[-1] <= SR / 2
 
 
-def test_match_curve_bounds_and_sensitivity(
-    reference_wav: str, render_dir: str
-) -> None:
+def test_match_curve_bounds_and_sensitivity(reference_wav: str, render_dir: str) -> None:
     mix_parts = []
     for name in ("kick", "bass", "snare", "vocals"):
         a, sr = load_audio_stereo(os.path.join(render_dir, f"{name}.wav"))
@@ -125,9 +115,7 @@ def test_match_curve_bounds_and_sensitivity(
     assert max(abs(g) for g in gains) >= 1.0
 
     # Resampled reference (different sr) must still work.
-    curve2 = compute_match_curve(
-        SR, mixdown, SR // 2, load_audio_stereo(reference_wav)[0][::2]
-    )
+    curve2 = compute_match_curve(SR, mixdown, SR // 2, load_audio_stereo(reference_wav)[0][::2])
     assert len(curve2) == 24
     assert all(np.isfinite(c["gain_db"]) for c in curve2)
 
@@ -169,9 +157,7 @@ def test_apply_match_eq_changes_spectrum() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_preview_with_reference_and_before(
-    render_dir: str, reference_wav: str, tmp_path_factory
-) -> None:
+def test_preview_with_reference_and_before(render_dir: str, reference_wav: str, tmp_path_factory) -> None:
     out_dir = str(tmp_path_factory.mktemp("preview_out"))
     out = os.path.join(out_dir, "preview_ref.wav")
     result = render_preview_mix(
@@ -202,9 +188,7 @@ def test_preview_with_reference_and_before(
 
     # Match EQ block present with a bounded curve.
     meq = result["match_eq"]
-    assert meq and os.path.abspath(meq["reference_path"]) == os.path.abspath(
-        reference_wav
-    )
+    assert meq and os.path.abspath(meq["reference_path"]) == os.path.abspath(reference_wav)
     curve = meq["curve"]
     assert len(curve) == 24
     assert all(-6.0 <= p["gain_db"] <= 6.0 for p in curve)
@@ -216,9 +200,7 @@ def test_preview_with_reference_and_before(
     assert float(np.max(np.abs(before_audio))) <= 10 ** (-0.8 / 20.0)
 
 
-def test_preview_without_reference_backward_compatible(
-    render_dir: str, tmp_path_factory
-) -> None:
+def test_preview_without_reference_backward_compatible(render_dir: str, tmp_path_factory) -> None:
     """No new arguments -> old behaviour, but the new keys still exist."""
     out_dir = str(tmp_path_factory.mktemp("preview_plain"))
     result = render_preview_mix(
@@ -267,23 +249,17 @@ def test_api_preview_reference_and_before(
     assert all(-6.0 <= p["gain_db"] <= 6.0 for p in body["match_eq"]["curve"])
 
     # Old-style request without the new fields keeps working.
-    plain = client.post(
-        "/api/preview", json={"style": "breaks", "directory": render_dir}
-    )
+    plain = client.post("/api/preview", json={"style": "breaks", "directory": render_dir})
     assert plain.status_code == 200
     assert plain.json()["match_eq"] is None
     assert "before_path" not in plain.json()
 
 
-def test_api_match_eq_endpoint(
-    client: TestClient, render_dir: str, reference_wav: str, tmp_path_factory
-) -> None:
+def test_api_match_eq_endpoint(client: TestClient, render_dir: str, reference_wav: str, tmp_path_factory) -> None:
     # Render any preview first so we have a mix WAV on disk.
     out_dir = str(tmp_path_factory.mktemp("meq_mix"))
     mix_wav = os.path.join(out_dir, "mix.wav")
-    rendered = render_preview_mix(
-        render_dir, get_profile("breaks"), output_path=mix_wav, max_duration=1.0
-    )
+    rendered = render_preview_mix(render_dir, get_profile("breaks"), output_path=mix_wav, max_duration=1.0)
     mix_wav = rendered["output_path"]
     _register_dir(os.path.dirname(mix_wav))
 

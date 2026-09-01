@@ -44,9 +44,7 @@ class DynamicEqConfig:
     mix: float = 1.0
 
 
-def _bandpass_isolate(
-    audio: np.ndarray, sr: int, freq_lo: float, freq_hi: float, q: float = 1.0
-) -> np.ndarray:
+def _bandpass_isolate(audio: np.ndarray, sr: int, freq_lo: float, freq_hi: float, q: float = 1.0) -> np.ndarray:
     """Isolate a frequency band using a 4th-order Linkwitz-Riley bandpass.
 
     The bandpass = highpass at freq_lo − lowpass at freq_hi, each −24 dB/oct.
@@ -64,9 +62,7 @@ def _bandpass_isolate(
     return sosfiltfilt(sos_lp, hp, axis=0)
 
 
-def _envelope_follower(
-    audio: np.ndarray, sr: int, attack_ms: float, release_ms: float
-) -> np.ndarray:
+def _envelope_follower(audio: np.ndarray, sr: int, attack_ms: float, release_ms: float) -> np.ndarray:
     """RMS envelope follower with separate attack/release smoothing.
 
     Returns a per-sample envelope (always positive).
