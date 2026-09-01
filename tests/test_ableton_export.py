@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import sys
+from unittest.mock import patch
 
 SRC = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src")
 sys.path.insert(0, os.path.abspath(SRC))
@@ -105,7 +106,11 @@ class TestExportToLive:
 
     def test_connection_error(self) -> None:
         corrections = [_make_correction("kick", volume_db=-2.0)]
-        result = export_to_ableton(corrections, mode="live")
+        with patch(
+            "ableton_auto_mix.ableton_client.get_client",
+            side_effect=ConnectionRefusedError("Cannot connect to Ableton Live"),
+        ):
+            result = export_to_ableton(corrections, mode="live")
         assert len(result.errors) > 0
         assert "Cannot connect" in result.errors[0]
 

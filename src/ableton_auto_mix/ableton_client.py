@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import logging
+import threading
+import time
 from typing import Any
 
 from pythonosc import udp_client
@@ -45,7 +47,9 @@ class AbletonClient:
         dispatcher.set_default_handler(self._on_message)
         self._server = ThreadingOSCUDPServer((self.host, self.recv_port), dispatcher)
         self._server.daemon_threads = True
-        self._server.serve_forever()
+        t = threading.Thread(target=self._server.serve_forever, daemon=True)
+        t.start()
+        time.sleep(0.1)
 
     def disconnect(self) -> None:
         if self._server is not None:
